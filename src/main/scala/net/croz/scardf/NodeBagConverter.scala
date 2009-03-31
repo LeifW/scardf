@@ -35,13 +35,25 @@ extends NodeBagConverter[T]( bag => fn( bag.singleNode ) )
     if ( nopt.isDefined ) apply( nopt.get )
     else defaultValue
   } )
+
+  /**
+   * Constructs another bag converter which will return an Iterable through all values 
+   * converted from the nodes in given bag using this node converter.
+   */
+  def iterable = new NodeBagConverter[ Iterable[T] ]( _.map { this( _ ) } )
+
+  /**
+   * Constructs another bag converter which will return a set of all values converted from 
+   * the nodes in given bag using this node converter. 
+   */
+  def set = new NodeBagConverter[ Set[T] ]( bag => Set.empty ++ bag.map { this( _ ) } )
 }
 
 /**
  * Converts bag to a set of values, by applying given node converter to each node in the bag.
  */
-class SetConverter[T]( nc: NodeConverter[T] )
-extends NodeBagConverter[Set[T]]( bag => Set( bag.map( { n: Node => nc apply n } ).toSeq: _* ) )
+//class SetConverter[T]( nc: NodeConverter[T] )
+//extends NodeBagConverter[Set[T]]( bag => Set( bag.map( { n: Node => nc apply n } ).toSeq: _* ) )
 
 object asRes extends NodeConverter[Res]( _.asRes )
 object asProp extends NodeConverter[Prop]( _.asProp )
@@ -50,5 +62,5 @@ object asBoolean extends NodeConverter[Boolean]( _.asBoolean )
 object asInt extends NodeConverter[Int]( _.asInt )
 object asLocalDate extends NodeConverter[LocalDate]( _.asLocalDate )
 
-object asStringSet extends SetConverter( asString )
-object asResSet extends SetConverter( asRes )
+//object asStringSet extends SetConverter( asString )
+//object asResSet extends SetConverter( asRes )

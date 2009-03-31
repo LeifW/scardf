@@ -67,7 +67,7 @@ object ScardfSpecs extends Specification {
       jdoe/Spouse/asRes.option must_== None
       jdoe/Spouse/Name/Family must beEmpty
       jdoe/Spouse/Name/Family/asString.default( "(unknown)" ) must_== "(unknown)"
-      jdoe/Likes/asResSet must_== Set( Swimming, Science )
+      jdoe/Likes/asRes.set must_== Set( Swimming, Science )
     }
     "test boolean value" in {
       ( jdoe/IsMale? ) must_== true
