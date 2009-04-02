@@ -148,6 +148,15 @@ class ConstructQ( triplets: (Any, Any, Any)* ) extends SparqlQ[ConstructQ] {
   }
 }
 
+class AskQ( triplets: (Any, Any, Any)* ) extends SparqlQ[AskQ] {
+  where( triplets: _* )
+  
+  def in( rmodel: Model ) = {
+    val query = "ASK { " + conditions + "}"
+    execution( rmodel, query ).execAsk
+  }
+}
+
 class ExtractQ( props: Prop* ) extends SparqlQ[ExtractQ] {
   def from( focus: Res ) = {
     val triplets = new scala.collection.mutable.ListBuffer[(Any, Any, Any)]()

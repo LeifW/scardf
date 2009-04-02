@@ -17,6 +17,7 @@ object Sparql {
   def selectAllX[T]( c: NodeConverter[T] ) = new SelectIteratorQ( c )
   def extractRes( r: Res ) = new ExtractResQ( r )
   def extractResList( r: Res ) = new ExtractResListQ( r )
+  def ask( triplets: (Any, Any, Any)* ) = new AskQ( triplets: _* )
   def describe( v: QVar ) = new DescribeQ( v )
   def descriptionOf( r: Res ) = new DescribeResQ( r ) in r.model
   def construct( triplets: (Any, Any, Any)* ) = new ConstructQ( triplets: _* )

@@ -66,5 +66,9 @@ object QuerySpecs extends Specification {
       val iter = Sparql selectAllX asRes where( (X, Likes, Swimming) ) from data
       Set.empty ++ iter.toList must_== Set( anna, jane, jdoe )
     }
+    "ask queries" in {
+      Sparql ask( (jdoe, Likes, Science) ) in data must_== true
+      Sparql ask( (X, IsMale, false), (X, Likes, Science) ) in data must_== false
+    }
   }
 }
