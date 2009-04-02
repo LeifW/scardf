@@ -14,6 +14,7 @@ object PeopleVocabulary extends Vocabulary( "person:" ) {
   val Birthday = pProp( "Birthday" ) withRange XSD.date
   val IsMale = pProp( "IsMale" ) withRange XSD.boolean
   val Height = pProp( "Height" ) withRange XSD.int
+  val Weight = pProp( "Weight" ) withRange XSD.int
   val Hobby = pRes( "Hobby" )
   val Likes = pProp( "Likes" ) withRange Hobby
   val Swimming = pRes( "Swimming" ) a Hobby
@@ -81,8 +82,7 @@ object ScardfSpecs extends Specification {
       (jdoe/Children/asRdfList).toList must_== List( Res( "anna" ), Res( "bob" ) )
     }
     "sparql query" in {
-      val x = new QVar
-      Sparql selectRes x where( (x, Height, 167) ) from model must_== Some( jdoe )
+      Sparql selectX asRes where( (X, Height, 167) ) from model must_== Some( jdoe )
     }
   }
   "read graph" should {

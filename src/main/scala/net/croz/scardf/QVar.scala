@@ -26,4 +26,4 @@ class QVar {
 
 class NamedQVar( override val name: String ) extends QVar
 
-object ResX extends NamedQVar( "ResX" )
+object X extends NamedQVar( "X" )

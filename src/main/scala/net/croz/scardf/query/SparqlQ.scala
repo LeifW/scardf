@@ -10,7 +10,7 @@ import com.hp.hpl.jena.query.QuerySolution
 import com.hp.hpl.jena.query.QuerySolutionMap
 import com.hp.hpl.jena.query.ResultSet
 
-abstract class SparqlQ[T <: SparqlQ[T]] extends util.Logging {
+abstract class SparqlQ[+T <: SparqlQ[T]] extends util.Logging {
   var conditions = new StringBuffer()
   var orderBySeq = new StringBuffer()
   var upperBound = 0
@@ -90,6 +90,13 @@ abstract class BaseSelectQ[ T <: BaseSelectQ[T] ] extends SparqlQ[T] {
       orderByClause + limitClause + offsetClause
   
   def executeOn( model: Model ) = new QResultsIterator( execution( model, queryStr ).execSelect )
+  
+  def option( solutions: QResultsIterator, v: QVar ): Option[Node] = {
+    if ( !solutions.hasNext ) return None
+    val result = Some( solutions.next.get( v ).get )
+    if ( solutions.hasNext ) throw new RuntimeException( "Multiple solutions to " + this )
+    result
+  }
 }
 
 class SelectQ( exprs: Any* ) extends BaseSelectQ[SelectQ] {
@@ -103,44 +110,31 @@ class SelectQ( exprs: Any* ) extends BaseSelectQ[SelectQ] {
   def from( model: Model ) = executeOn( model )
 }
 
-class SelectResQ( v: QVar ) extends BaseSelectQ[SelectResQ] {
-  selectExprs = List( v )
-  def from( model: Model ): Option[Res] = {
-    val solutions = executeOn( model )
-    if ( !solutions.hasNext ) return None
-    val result = Some( solutions.next.get( v ).get.asRes )
-    if ( solutions.hasNext ) throw new RuntimeException( "Multiple solutions to " + this )
-    result
-  }
+class SelectIteratorQ[T]( converter: NodeConverter[T] ) 
+extends BaseSelectQ[SelectIteratorQ[T]] {
+  selectExprs = List( X )
+  def from( model: Model ): Iterator[T] = executeOn( model ) map { _( X )/converter }
 }
 
-class SelectResIteratorQ( v: QVar ) extends SparqlQ[SelectResIteratorQ] {
-  def from( rmodel: Model ): Iterator[Res] =
-    new SelectQ( v, conditions ) from rmodel map { _( v ).asRes }
+class SelectOptionQ[T]( converter: NodeConverter[T] ) extends BaseSelectQ[SelectOptionQ[T]] {
+  selectExprs = List( X )
+  def from( model: Model ): Option[T] = option( executeOn( model ), X ) map { _/converter }
 }
 
-class ExtractResQ( r: Res ) extends SparqlQ[ExtractResQ] {
-  def replaceVar( qs: String, v: QVar ) = {
-    qs.replaceAll( NTripleHelper.ntRendering( r.jResource ), rendering( v ) ).replaceAll( "\\s+", " " )
-  }
-  
-  def from( rmodel: Model ): Option[Res] = {
-    val v = new QVar
-    val selectQ = new SelectResQ( v )
-    selectQ.conditions = new StringBuffer( replaceVar( r.model.dumpedIn( "N-TRIPLE" ), v ) )
-    selectQ from rmodel
-  }
-}
-
-class ExtractResListQ( val fetchRes: Res ) extends BaseSelectQ[ExtractResListQ] {
-  selectExprs = List( ResX )
-  conditions append replaceVar( fetchRes.model.dumpedIn( "N-TRIPLE" ) )
+abstract class BaseExtractQ[T <: BaseExtractQ[T]]( val r: Res ) extends BaseSelectQ[T] {
+  selectExprs = List( X )
+  conditions append replaceVar( r.model.dumpedIn( "N-TRIPLE" ) )
   
   def replaceVar( qs: String ) =
-    qs.replace( NTripleHelper.ntRendering( fetchRes.jResource ), rendering( ResX ) ).replaceAll( "\\s+", " " )
-  
-  def from( model: Model ): Seq[Res] =
-    executeOn( model ).toList map { x => x( ResX ).asRes }
+    qs.replace( NTripleHelper.ntRendering( r.jResource ), rendering( X ) ).replaceAll( "\\s+", " " )
+}
+
+class ExtractResQ( override val r: Res ) extends BaseExtractQ[ExtractResListQ]( r ) {
+  def from( model: Model ): Option[Res] = option( executeOn( model ), X ) map { _.asRes }
+}
+
+class ExtractResListQ( override val r: Res ) extends BaseExtractQ[ExtractResListQ]( r ) {
+  def from( model: Model ): List[Res] = executeOn( model ).toList map { _( X ).asRes }
 }
 
 class ConstructQ( triplets: (Any, Any, Any)* ) extends SparqlQ[ConstructQ] {

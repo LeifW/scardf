@@ -36,10 +36,6 @@ object QuerySpecs extends Specification {
     for ( p <- List( anna, bob, jane, jdoe ) )
       p/Name/asRes state Family -> "Doe"
     
-    "select res" in {
-      val x = new QVar
-      Sparql selectRes x where( (x, Height, 167) ) from data must_== Some( jdoe )
-    }
     "select, order, offset and limit" in {
       val person, height = new QVar
       val selectPersonsByHeight = ( Sparql 
@@ -60,6 +56,15 @@ object QuerySpecs extends Specification {
       val hobbies = allHobbiesResult.solutions.map{ _(hobby).asRes }
       hobbies.size must beGreaterThanOrEqualTo( 2 )
       hobbies must containAll( Set( Swimming, Science ) )
+    }
+    "select one X as option" in {
+      Sparql selectX asRes where( (X, Likes, Science) ) from data must_== Some( jdoe )
+      Sparql selectX asInt where( (jane, Height, X) ) from data must_== Some( 150 )
+      Sparql selectX asInt where( (jane, Weight, X) ) from data must_== None
+    }
+    "select all X as iterator" in {
+      val iter = Sparql selectAllX asRes where( (X, Likes, Swimming) ) from data
+      Set.empty ++ iter.toList must_== Set( anna, jane, jdoe )
     }
   }
 }

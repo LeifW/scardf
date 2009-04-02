@@ -13,8 +13,8 @@ import com.hp.hpl.jena.query.ResultSet
  
 object Sparql {
   def select( exprs: Any* ) = new SelectQ( exprs )
-  def selectRes( v: QVar ) = new SelectResQ( v )
-  def selectAll = new SelectResIteratorQ( ResX )
+  def selectX[T]( c: NodeConverter[T] ) = new SelectOptionQ( c )
+  def selectAllX[T]( c: NodeConverter[T] ) = new SelectIteratorQ( c )
   def extractRes( r: Res ) = new ExtractResQ( r )
   def extractResList( r: Res ) = new ExtractResListQ( r )
   def describe( v: QVar ) = new DescribeQ( v )
@@ -29,17 +29,24 @@ case class distinct( override val exprs: Any* ) extends QualifiedArguments( "DIS
 case class reduced( override val exprs: Any* ) extends QualifiedArguments( "REDUCED", exprs )
 
 case class QSolution( jSolution: QuerySolution ) {
+  /**
+   * Value of given variable for this solution.
+   * @throws NoSuchElementException if there's no associated value
+   */
   def apply( v: QVar ): Node = get( v ).get
   
   def get( v: QVar ): Option[Node] = get( v.name )
   
+  /**
+   * Optional value of variable given by its name.
+   */
   def get( key: String ) = {
     val solution = jSolution.get( key )
-    if ( solution == null ) None else Some( new Node( solution ) )
+    if ( solution == null ) None else Some( Node( solution ) )
   }
 
   /**
-   * Converts t
+   * Constructs a map of all variables and their values for this solution.
    */
   def toMap: Map[QVar, Node] = {
     val result = scala.collection.mutable.Map[QVar, Node]()
@@ -59,7 +66,8 @@ case class QResultsIterator( rs: ResultSet ) extends Iterator[QSolution] {
   def next = QSolution( rs.nextSolution )
   
   /**
-   * 
+   * Constructs a list of maps of all solutions from this iterator.
+   * @see QSolution#toMap
    */
   def solutions = toList map { _.toMap }
 }
