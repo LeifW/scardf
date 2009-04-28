@@ -5,14 +5,17 @@ import com.hp.hpl.jena.rdf.model.Property
 import com.hp.hpl.jena.datatypes.RDFDatatype
 import com.hp.hpl.jena.datatypes.TypeMapper
 
-class Prop( val jProperty: Property, m: Model ) extends Res( jProperty, m ) {
-
+class Prop( val jProperty: Property, m: Model ) extends Res( jProperty, m ) with PredicateChain
+{
   def this( jProperty: Property ) = this( jProperty, Model( jProperty.getModel ) )
   def of( res: Res ) = res/this/!
   def ? = new NodeConverter[Boolean]( x => (x/this/!).asBoolean )
-  def ->>( values: Any* ) = for ( v <- values ) yield (this, v)
+  //def ->>( values: Any* ) = for ( v <- values ) yield (this, v)
+  def -( p: Prop ) = PropPath( this, p )
+  def -( subtrees: PredicateTree* ) = PredicateTree( this -> subtrees.reduceLeft( _ ++ _ ) )
 
   def apply( node: Node ): Node = node.asRes/this/!
+  def update( res: Res, value: Any ) = res state this -> value
     
   override def assign( prop: Prop, value: Any ): Prop = {
     super.assign( prop, value )

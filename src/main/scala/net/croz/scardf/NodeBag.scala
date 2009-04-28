@@ -2,6 +2,7 @@ package net.croz.scardf
 
 object NodeBag {
   def apply( nodes: Node* ) = new NodeBag( nodes.toList )
+  def apply( nodesIt: Iterator[Node] ) = new NodeBag( nodesIt.toList )
   implicit def toNodeBag( n: Node ) = new NodeBag( List( n ) )
   implicit def toNodeBag( nOpt: Option[Node] ) = new NodeBag( nOpt.toList )
 }
@@ -38,12 +39,6 @@ class NodeBag( val list: List[Node] ) extends scala.Collection[Node] {
    */
   def /( predicate: Prop ): NodeBag = 
     new NodeBag( list flatMap { _.asRes.valuesOf( predicate ).toList } )
-
-//  /**
-//   * Applies given converter to the single node, yielding a single value.
-//   * @throws RdfTraversalException if the size of this bag is not 1
-//   */
-//  def /[T]( converter: NodeConverter[T] ): T = converter( singleNode )
   
   /**
    * Applies given converter to this bag yielding a set of values.
@@ -51,15 +46,15 @@ class NodeBag( val list: List[Node] ) extends scala.Collection[Node] {
   def /[T]( converter: NodeBagConverter[T] ): T = converter( this )
 
   /**
-   * Filters this bag for nodes that are literals in the given language.
-   */
-  def /( lang: Lang ) = new NodeBag( list filter { _ isLitOn lang } )
+  * Filters this bag for nodes that are literals in the given language.
+  */
+  def /( lang: Lang ): NodeBag = this/where( _ isLitOn lang )
 
   /**
-   * Retrieves single node's Boolean value.
-   * @throws RdfTraversalException if the size of this bag is not 1
+   * All nodes in the bag are convertable to boolean "true".
+   * For an empty bag returns false.
    */
-  def ? = singleNode.asBoolean
+  def ? = this/asBoolean.set == Set( true )
   
   /**
    * Does this bag contain any nodes? Inverse of {@link #isEmpty}
@@ -78,6 +73,7 @@ class NodeBag( val list: List[Node] ) extends scala.Collection[Node] {
   
   def size = list.length
   def elements = list.elements
+  def contains( n: Node ) = list contains n
   
   lazy val sorted = new NodeBag( Node sort list )
 
@@ -91,9 +87,7 @@ class NodeBag( val list: List[Node] ) extends scala.Collection[Node] {
   
   override lazy val hashCode: Int = this.sorted.hashCode
   
-  def contains( n: Node ) = list contains n
-  
-  override def toString = list.toString
+  override def toString = list.mkString( "NodeBag(", ", ", ")" )
 }
 
 class RdfTraversalException( msg: String ) extends Exception( msg )

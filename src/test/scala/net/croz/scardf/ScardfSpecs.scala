@@ -3,32 +3,18 @@ package net.croz.scardf
 import org.joda.time.LocalDate
 import org.specs._
 import org.specs.runner.JUnit4
+import PeopleVocabulary._
+
+object AllSpecs extends Specification {
+  "all of Scardf".isSpecifiedBy( 
+    ScardfSpecs, LitSpec, NoVarSpec, PropPathSpec, QuerySpecs // add NodeBagSpec
+  )
+  reject( "skipped" )
+}
 
 class ScardfSpecsTest extends JUnit4(ScardfSpecs)
 
-object PeopleVocabulary extends Vocabulary( "person:" ) {
-  val Person = pRes( "Person" )
-  val Name = pProp( "Name" )
-  val Given = pProp( "Given" )
-  val Family = pProp( "Family" )
-  val Birthday = pProp( "Birthday" ) withRange XSD.date
-  val IsMale = pProp( "IsMale" ) withRange XSD.boolean
-  val Height = pProp( "Height" ) withRange XSD.int
-  val Weight = pProp( "Weight" ) withRange XSD.int
-  val Hobby = pRes( "Hobby" )
-  val Likes = pProp( "Likes" ) withRange Hobby
-  val Swimming = pRes( "Swimming" ) a Hobby
-  val Science = pRes( "Science" ) a Hobby
-  val Spouse = pProp( "Spouse" ) withRange Person
-  val Children = pProp( "Children" )
-}
-
 object ScardfSpecs extends Specification {
-  "Literals" should {
-    "do equals" in {
-      Lit( "a" ) must_== Lit( "a" )
-    }
-  }
   "NodeBag" should {
     "throw exception on taking one node from empty bag" in {
       NodeBag().oneNode must throwA[ NoSuchElementException ]
@@ -59,6 +45,11 @@ object ScardfSpecs extends Specification {
     "extract property value" in {
       Given( Name( jdoe ) ) must_== Lit( "John" )
     }
+    "assign value to property" in {
+      Weight( jdoe ) = 88
+      Weight( jdoe ) must_== Lit( 88 )
+      //(Name-Family)( Res( "anna" ) ) = "Doe"
+    }
     "read path" in {
       jdoe/Name/Given/asString must_== "John"
       jdoe/Height/asInt must_== 167
@@ -85,6 +76,7 @@ object ScardfSpecs extends Specification {
       Sparql selectX asRes where( (X, Height, 167) ) from model must_== Some( jdoe )
     }
   }
+  /*
   "read graph" should {
     val turtleSrc = """
 @prefix :        <person:> .
@@ -111,5 +103,5 @@ object ScardfSpecs extends Specification {
     "" in {
       println( m.getRes( "example:jdoe" )/Children/asRdfList/Name/Family )
     }
-  }
+  }*/
 }

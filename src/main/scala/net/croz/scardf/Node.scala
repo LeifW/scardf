@@ -6,15 +6,19 @@ import com.hp.hpl.jena.rdf.model.RDFNode
 import com.hp.hpl.jena.rdf.model.RDFList
 import com.hp.hpl.jena.rdf.model.Literal
 import org.joda.time.LocalDate
+import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat.date
+import org.joda.time.format.ISODateTimeFormat.dateTime
 
 class Node( val jNode: RDFNode ) {
 
   def /( p: Prop ): NodeBag = asRes/p
+  def /( pp: PropPath ): NodeBag = asRes/pp
   def /[T]( converter: NodeConverter[T] ): T = converter( this )
 
   def isUriResource = jNode.isURIResource
   def isRes = jNode.isResource
+  def isBlank = jNode.isAnon
   def isRdfList = jNode.canAs( classOf[RDFList] )
   def isLit = jNode.isLiteral
   def isLitOn( lang: Lang ) = 
@@ -40,7 +44,10 @@ class Node( val jNode: RDFNode ) {
   def asString: String = asLiteral.getString
   def asBoolean: Boolean = asLiteral.getBoolean
   def asInt: Int = asLiteral.getInt
+  def asDouble: Double = asLiteral.getDouble
+  def asBigDecimal: BigDecimal = BigDecimal( asLiteral.getLexicalForm )
   def asLocalDate: LocalDate = date.parseDateTime( asLiteral.getLexicalForm ).toLocalDate
+  def asDateTime: DateTime = dateTime.parseDateTime( asLiteral.getLexicalForm ).toDateTime
   
   override def equals( o: Any ) = o match {
     case that: Node => this.jNode.asNode.sameValueAs( that.jNode.asNode )

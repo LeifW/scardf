@@ -10,18 +10,29 @@ import com.hp.hpl.jena.query.QueryParseException
 import com.hp.hpl.jena.query.QuerySolution
 import com.hp.hpl.jena.query.QuerySolutionMap
 import com.hp.hpl.jena.query.ResultSet
- 
+
 object Sparql {
   def select( exprs: Any* ) = new SelectQ( exprs )
   def selectX[T]( c: NodeConverter[T] ) = new SelectOptionQ( c )
   def selectAllX[T]( c: NodeConverter[T] ) = new SelectIteratorQ( c )
-  def extractRes( r: Res ) = new ExtractResQ( r )
-  def extractResList( r: Res ) = new ExtractResListQ( r )
+  
+  def extractRes( r: Res, replaces: Pair[Res, QVar]* ) = new ExtractResQ( r, Map( replaces: _* ) )
+  def extractResList( r: Res, replaces: Pair[Res, QVar]* ) = 
+    new ExtractResListQ( r, Map( replaces: _* ) )
+  def extract( props: Prop* ) = new ExtractQ( props: _* )
+  
   def ask( triplets: (Any, Any, Any)* ) = new AskQ( triplets: _* )
+  
   def describe( v: QVar ) = new DescribeQ( v )
   def descriptionOf( r: Res ) = new DescribeResQ( r ) in r.model
+  
   def construct( triplets: (Any, Any, Any)* ) = new ConstructQ( triplets: _* )
-  def extract( props: Prop* ) = new ExtractQ( props: _* )
+  def construct( tempGraph: Model ): ConstructQ = {
+    val triplets = TripletFactory tripletsFrom tempGraph
+    construct( triplets: _* ) where( triplets: _* )
+  }
+  def construct( ptree: PredicateTree ) = new PTreeConstructQ( ptree )
+  
   def take( expr: Any* ) = new TakeQ( expr: _* )
 }
 
@@ -53,8 +64,11 @@ case class QSolution( jSolution: QuerySolution ) {
     val result = scala.collection.mutable.Map[QVar, Node]()
     val iterator = jSolution.varNames
     while ( iterator.hasNext ) {
-      val v = QVar( iterator.next.asInstanceOf[String] )
-      result += v -> apply( v )
+      val qvar = QVar( iterator.next.asInstanceOf[String] )
+      get( qvar ) match {
+        case Some( value ) => result += qvar -> value
+        case None => // skip
+      }
     }
     Map.empty ++ result
   }

@@ -7,9 +7,15 @@ import com.hp.hpl.jena.vocabulary.{RDFS => jRDFS}
 import com.hp.hpl.jena.vocabulary.{XSD => jXSD}
 
 class Vocabulary( val prefix: String ) {
-  val model = new Model()
-  def pRes( name: String ) = Res( prefix + name )( model )
-  def pProp( name: String ) = Prop( prefix + name )( model )
+  val model = new Model withPrefix prefix
+  
+  def apply( name: String ) = pRes( name )
+  def *( name: String ) = pRes( name )
+  def \( name: String ) = pRes( name )
+  def ~( name: String ) = pProp( name )  
+  def §( name: String ) = pProp( name )  
+  def pRes( name: String ) = Res( name )( model )
+  def pProp( name: String ) = Prop( name )( model )
   def wRes( r: Resource ) = Res( r, model )
   def wProp( p: Property ) = Prop( p, model )
 }

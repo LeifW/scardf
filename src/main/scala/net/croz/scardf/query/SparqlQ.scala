@@ -12,11 +12,15 @@ import com.hp.hpl.jena.query.ResultSet
 
 abstract class SparqlQ[+T <: SparqlQ[T]] extends util.Logging {
   var conditions = new StringBuffer()
+  var optConditions = new StringBuffer()
   var orderBySeq = new StringBuffer()
   var upperBound = 0
   var offsetAmount = 0
 
+  //TODO! move these to BaseSelectQ?
+  
   def where( triples: (Any, Any, Any)* ): T = appendTriplets( conditions, triples: _* )
+  def optional( triples: (Any, Any, Any)* ): T = appendTriplets( optConditions, triples: _* )
   
   def orderBy( comparators: OrderComparator* ): T = {
     for ( c <- comparators ) orderBySeq append c.rendering + " "
@@ -52,12 +56,14 @@ abstract class SparqlQ[+T <: SparqlQ[T]] extends util.Logging {
     case x => x.toString
   }
   
+  def optionalConditions = if ( optConditions.length == 0 ) "" 
+                           else " OPTIONAL { " + optConditions + "}"
   def orderByClause = if ( orderBySeq.length == 0 ) "" else " ORDER BY " + orderBySeq
   def limitClause = if ( upperBound == 0 ) "" else " LIMIT " + upperBound
   def offsetClause = if ( offsetAmount == 0 ) "" else " OFFSET " + offsetAmount
 
   def execution( rmodel: Model, query: String ) = {
-    log.info( "Query = " + query )
+    log.info( "Executing query " + query )
     try {
       val q = QueryFactory.create( query )
       QueryExecutionFactory.create( q, rmodel.jModel, new QuerySolutionMap )
@@ -86,8 +92,9 @@ abstract class BaseSelectQ[ T <: BaseSelectQ[T] ] extends SparqlQ[T] {
 
   var selectExprs: List[_] = List()
   
-  def queryStr = "SELECT " + rendering( selectExprs ) + " WHERE { " + conditions + "}" +
-      orderByClause + limitClause + offsetClause
+  def queryStr = "SELECT " + rendering( selectExprs ) + 
+    " WHERE { " + conditions + optionalConditions + "}" +
+    orderByClause + limitClause + offsetClause
   
   def executeOn( model: Model ) = new QResultsIterator( execution( model, queryStr ).execSelect )
   
@@ -121,20 +128,30 @@ class SelectOptionQ[T]( converter: NodeConverter[T] ) extends BaseSelectQ[Select
   def from( model: Model ): Option[T] = option( executeOn( model ), X ) map { _/converter }
 }
 
-abstract class BaseExtractQ[T <: BaseExtractQ[T]]( val r: Res ) extends BaseSelectQ[T] {
+abstract class BaseExtractQ[T <: BaseExtractQ[T]]( val r: Res, replaces: Map[Res, QVar] )
+extends BaseSelectQ[T] {
   selectExprs = List( X )
-  conditions append replaceVar( r.model.dumpedIn( "N-TRIPLE" ) )
+  private var condStr = r.model.dumpedIn( "N-TRIPLE" ).replaceAll( "\\s+", " " )
+  condStr = replaceVar( condStr, r, X )
+  for ( pair <- replaces )
+    condStr = replaceVar( condStr, pair._1, pair._2 )
+  conditions = new StringBuffer( condStr )
   
-  def replaceVar( qs: String ) =
-    qs.replace( NTripleHelper.ntRendering( r.jResource ), rendering( X ) ).replaceAll( "\\s+", " " )
+  private def replaceVar( qs: String, r: Res, v: QVar ) =
+    qs.replace( NTripleHelper.ntRendering( r.jResource ), rendering( v ) )
 }
 
-class ExtractResQ( override val r: Res ) extends BaseExtractQ[ExtractResListQ]( r ) {
+class ExtractResQ( override val r: Res, replaces: Map[Res, QVar] )
+extends BaseExtractQ[ExtractResListQ]( r, replaces ) {
   def from( model: Model ): Option[Res] = option( executeOn( model ), X ) map { _.asRes }
 }
 
-class ExtractResListQ( override val r: Res ) extends BaseExtractQ[ExtractResListQ]( r ) {
-  def from( model: Model ): List[Res] = executeOn( model ).toList map { _( X ).asRes }
+class ExtractResListQ( override val r: Res, replaces: Map[Res, QVar] )
+extends BaseExtractQ[ExtractResListQ]( r, replaces ) {
+  def from( model: Model ): List[Res] = {
+    val l = executeOn( model ).toList
+    l map { _( X ).asRes }
+  }
 }
 
 class ConstructQ( triplets: (Any, Any, Any)* ) extends SparqlQ[ConstructQ] {
@@ -148,13 +165,22 @@ class ConstructQ( triplets: (Any, Any, Any)* ) extends SparqlQ[ConstructQ] {
   }
 }
 
+class PTreeConstructQ( ptree: PredicateTree ) extends SparqlQ[PTreeConstructQ] {
+  def from( anchor: Res ) = {
+    var constructions, required, optionals = new StringBuffer()
+    val allTriplets = TripletFactory tripletsFrom ptree.growTemplateFrom( anchor ).model
+    appendTriplets( constructions, allTriplets: _* )
+    val query = "CONSTRUCT { " + constructions + "} WHERE { " + constructions + "}"
+    val markStart = System.currentTimeMillis
+    val result = Model( execution( anchor.model, query ).execConstruct )
+    log info "Span construction took " + (System.currentTimeMillis - markStart) + " ms"
+    result
+  }
+}
+
 class AskQ( triplets: (Any, Any, Any)* ) extends SparqlQ[AskQ] {
   where( triplets: _* )
-  
-  def in( rmodel: Model ) = {
-    val query = "ASK { " + conditions + "}"
-    execution( rmodel, query ).execAsk
-  }
+  def in( model: Model ) = execution( model, "ASK { " + conditions + "}" ).execAsk
 }
 
 class ExtractQ( props: Prop* ) extends SparqlQ[ExtractQ] {
@@ -189,9 +215,13 @@ class TakeQ( exprs: Any* ) extends SparqlQ[TakeQ] {
     }
   
   def from( focus: Res ) = {
-    log info "From " + exprs
+    log debug "From " + exprs
     val result = if ( putModel == null ) new Model else putModel
     appendAll( result, focus, exprs.toList )
     result
   }
+}
+
+class LocateSpanQ( focus: Res ) {
+  def span( ptree: PredicateTree ) = new SelectQ()
 }

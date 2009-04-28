@@ -1,6 +1,8 @@
 package net.croz.scardf
 
 import org.joda.time.LocalDate
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 import com.hp.hpl.jena.rdf.model.RDFNode
 import com.hp.hpl.jena.rdf.model.Resource
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype._
@@ -20,6 +22,7 @@ extends Node( jResource ) with util.Logging {
   def has( assignment: (Prop, Any) ) = this( assignment )?
   
   override def /( p: Prop ): NodeBag = new NodeBag( valuesOf( p ).toList )
+  override def /( pp: PropPath ): NodeBag = pp.foldLeft( NodeBag( this ) ){ _/_ }
 
   def valueOf( p: Prop ): Option[Node] = {
     if ( jResource hasProperty p.jProperty ) 
@@ -46,14 +49,18 @@ extends Node( jResource ) with util.Logging {
   
   def assign( prop: Prop, value: Any ): Res = {
     value match {
+      case n: Node      => jResource.addProperty( prop, n.jNode )
+      case jn: RDFNode  => jResource.addProperty( prop, jn )
       case all: All     => for ( n <- all.nodes ) assign( prop, n )
+      case (a, b)       => assign( prop, a ); assign( prop, b )
+      case (a, b, c)    => assign( prop, a ); assign( prop, b ); assign( prop, c )
+      case (a, b, c, d) => assign( prop, All( a, b, c, d ) )
       case s: String    => jResource.addProperty( prop, s, prop.datatype.getOrElse( XSDstring ) )
       case ls: LangStr  => jResource.addProperty( prop, ls.str, ls.lang )
-      case r: Res       => jResource.addProperty( prop, r.jResource )
-      case r: Resource  => jResource.addProperty( prop, r )
       case b: Boolean   => jResource.addProperty( prop, b.toString, XSDboolean )
       case i: Int       => jResource.addProperty( prop, i.toString, XSDint )
       case d: LocalDate => jResource.addProperty( prop, d.toString, XSDdate )
+      case d: DateTime  => jResource.addProperty( prop, ISODateTimeFormat.dateTime.print( d ), XSDdateTime )
       case x            => throw new RuntimeException( x + " of unknown type" )
     }
     this
@@ -88,7 +95,7 @@ extends Node( jResource ) with util.Logging {
   }
   
   override def rendering: String =
-    if ( jResource.isAnon ) "_:A" + jResource.getId.getLabelString
+    if ( jResource.isAnon ) "_:A" + jResource.getId.getLabelString.replace( ":", "" )
     else "<" + uri + ">"
 }
 

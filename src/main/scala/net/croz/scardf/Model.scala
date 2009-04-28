@@ -31,7 +31,7 @@ class Model( val jModel: JModel ) extends util.Logging {
   def withPrefix( prefix: String ) = { this.prefix = prefix; this }
   
   private def remember( r: Res ) = {
-    log.info( hashCode + " " + r + " " + mapping )
+    //log.info( hashCode + " " + r + " " + mapping )
     mapping += r.jResource -> r
     r
   }
@@ -62,9 +62,9 @@ class Model( val jModel: JModel ) extends util.Logging {
   def getProp( uri: String ): Prop = getProp( jModel.getProperty( this.prefix + uri ) )
 
   def getRdfList( jRdfList: RDFList ): RdfList = {
-    log.info( this, "get list", jRdfList, mapping.get(jRdfList), mapping )
+    //log.info( this, "get list", jRdfList, mapping.get(jRdfList), mapping )
     val r = mapping.getOrElseUpdate( jRdfList, new RdfList( jRdfList, this ) ).asInstanceOf[RdfList]
-    log.info( this, jRdfList, mapping.get(jRdfList), mapping )
+    //log.info( this, jRdfList, mapping.get(jRdfList), mapping )
     r
   }
   
@@ -76,6 +76,8 @@ class Model( val jModel: JModel ) extends util.Logging {
   def add( stmt: Stmt ) = jModel add stmt.jStatement
   
   def addAll( stmts: List[Stmt] ) = stmts map add
+  
+  def ++( other: Model ) = jModel add other.jModel
   
   def local = Model( jModel match {
     case om: OntModel => om.getBaseModel
