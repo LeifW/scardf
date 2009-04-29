@@ -20,7 +20,7 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
   }
   "Query mechanism" should {
     "select, order, offset and limit" in {
-      val person, height = new QVar
+      val person, height = QVar()
       val selectPersonsByHeight = ( Sparql 
         select( person, height ) 
           where( (person, RDF.Type, Person), (person, Height, height) )
@@ -31,8 +31,19 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
         Map( person -> anna, height -> Lit(107) ), Map( person -> jane, height -> Lit(150) )
       )
     }
+    "select using symbols" in {
+      val selectPersonsByHeight = ( Sparql 
+        select( 'person, 'height ) 
+          where( ('person, RDF.Type, Person), ('person, Height, 'height) )
+          orderBy( asc( 'height ) )
+          limit 2 offset 1
+      )
+      ( selectPersonsByHeight from data ).solutions == List(
+        Map( 'person -> anna, 'height -> Lit(107) ), Map( 'person -> jane, 'height -> Lit(150) )
+      )
+    }
     "select with/without DISTINCT" in {
-      val person, hobby = new QVar
+      val person, hobby = QVar()
       val distinctHobbies = Sparql select distinct( hobby ) where( (person, Likes, hobby) ) from data
       distinctHobbies.solutions.map{ _(hobby) } must_== List( Swimming, Science )
       val allHobbiesResult = Sparql select hobby where( (person, Likes, hobby) ) from data
@@ -50,7 +61,7 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
       Set.empty ++ iter.toList must_== Set( anna, jane, john )
     }
     "select with optional constraints" in {
-      val person, spouse = new QVar
+      val person, spouse = QVar()
       val selectPersonsWithSpouses = ( Sparql 
         select( person, spouse ) 
           where( (person, RDF.Type, Person) )

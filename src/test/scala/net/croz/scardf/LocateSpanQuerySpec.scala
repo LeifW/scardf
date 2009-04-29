@@ -12,7 +12,7 @@ object LocateSpanQuerySpec extends org.specs.Specification with specs.RdfMatcher
     val ptree = PredicateTree( Name-(Given, Family), Height )
     
     "select some" in {
-      val qLikes = new QVar
+      val qLikes = QVar()
       val selectQ = Sparql select( X, qLikes ) where( (X, IsMale, true), (X, Likes, qLikes) )
       println( selectQ from FamilyVocabulary.model solutions )
     }

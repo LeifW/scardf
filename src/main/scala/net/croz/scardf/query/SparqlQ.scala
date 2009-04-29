@@ -53,6 +53,7 @@ abstract class SparqlQ[+T <: SparqlQ[T]] extends util.Logging {
     case seq: Seq[_] => seq map { x: Any => rendering( x ) } mkString " "
     case n: Node => n.rendering
     case s: String => "\"" + s + "\""
+    case s: Symbol => QVar.rendering( s.name )
     case x => x.toString
   }
   
@@ -186,7 +187,7 @@ class AskQ( triplets: (Any, Any, Any)* ) extends SparqlQ[AskQ] {
 class ExtractQ( props: Prop* ) extends SparqlQ[ExtractQ] {
   def from( focus: Res ) = {
     val triplets = new scala.collection.mutable.ListBuffer[(Any, Any, Any)]()
-    for ( p <- props ) triplets += (focus, p, new QVar)
+    for ( p <- props ) triplets += (focus, p, QVar())
     new ConstructQ( triplets: _* ) where( triplets: _* ) from focus.model
   }
 }

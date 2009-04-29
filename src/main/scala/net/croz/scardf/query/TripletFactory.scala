@@ -14,7 +14,7 @@ private class TripletFactory {
   val varMap = scala.collection.mutable.Map[ Res, QVar ]()
   
   def replaced( o: Any ) = o match {
-    case n: Res if n.isBlank => varMap.getOrElseUpdate( n, new QVar )
+    case n: Res if n.isBlank => varMap.getOrElseUpdate( n, QVar() )
     case other => other
   }
   
