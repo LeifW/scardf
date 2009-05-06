@@ -72,7 +72,12 @@ object ScardfSpecs extends Specification {
     "read collections" in {
       (jdoe/Children/asRdfList).toList must_== List( Res( "anna" ), Res( "bob" ) )
     }
-    "sparql query" in {
+    "sparql query heighest" in {
+      val selectHeighest = Sparql select 'person where( ('person, Height, 'h) ) orderBy desc( 'h ) limit 1
+      val results = selectHeighest from model
+      results.solutions must_== List( Map( QVar( "person" ) -> jdoe ) )
+    }
+    "sparql query select X" in {
       Sparql selectX asRes where( (X, Height, 167) ) from model must_== Some( jdoe )
     }
   }
