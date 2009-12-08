@@ -13,7 +13,7 @@ object NoVarSpec extends Specification {
       val family = new Vocabulary( "http://voc.eg#" )
       Spouse( family\"John" ) = family~"Jane"
       (family~"Mother")( family\"Jane" ) = family~"Vilma"
-      val MotherInLaw = Spouse - family~"Mother"
+      val MotherInLaw = Spouse ~ (family~"Mother")
       family\"John"/MotherInLaw/asRes must_== family~"Vilma"
     }
     "" in {

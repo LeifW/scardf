@@ -68,6 +68,7 @@ object Node {
   }
   
   private def wrap( jNode: RDFNode ): Node = jNode match {
+    case null        => null
     case rl: RDFList => RdfList from rl
     case p: Property => Prop( p )
     case r: Resource => Res( r )

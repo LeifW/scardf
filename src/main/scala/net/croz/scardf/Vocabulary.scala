@@ -10,10 +10,10 @@ class Vocabulary( val prefix: String ) {
   val model = new Model withPrefix prefix
   
   def apply( name: String ) = pRes( name )
-  def *( name: String ) = pRes( name )
   def \( name: String ) = pRes( name )
+  def ÷( name: String ) = pRes( name )
   def ~( name: String ) = pProp( name )  
-  def §( name: String ) = pProp( name )  
+  def ^( name: String ) = pProp( name )  
   def pRes( name: String ) = Res( name )( model )
   def pProp( name: String ) = Prop( name )( model )
   def wRes( r: Resource ) = Res( r, model )

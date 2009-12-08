@@ -19,6 +19,12 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
     }
   }
   "Query mechanism" should {
+    "select with number literal in where triple's object" in {
+      val person = QVar()
+	  val personsHigh107 = 
+	    Sparql select( person ) where( (person, Height, 107), (person, RDF.Type, Person) ) from data
+	  personsHigh107.solutions must_== List( Map( person -> anna ) )
+    }
     "select, order, offset and limit" in {
       val person, height = QVar()
       val selectPersonsByHeight = ( Sparql 
@@ -27,19 +33,20 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
           orderBy( asc( height ) )
           limit 2 offset 1
       )
-      ( selectPersonsByHeight from data ).solutions == List(
+      ( selectPersonsByHeight from data ).solutions must_== List(
         Map( person -> anna, height -> Lit(107) ), Map( person -> jane, height -> Lit(150) )
       )
     }
     "select using symbols" in {
+      val person, height = QVar()
       val selectPersonsByHeight = ( Sparql 
-        select( 'person, 'height ) 
-          where( ('person, RDF.Type, Person), ('person, Height, 'height) )
-          orderBy( asc( 'height ) )
+        select( person, height ) 
+          where( (person, RDF.Type, Person), (person, Height, height) )
+          orderBy( asc( height ) )
           limit 2 offset 1
       )
-      ( selectPersonsByHeight from data ).solutions == List(
-        Map( 'person -> anna, 'height -> Lit(107) ), Map( 'person -> jane, 'height -> Lit(150) )
+      ( selectPersonsByHeight from data ).solutions must_== List(
+        Map( person -> anna, height -> Lit(107) ), Map( person -> jane, height -> Lit(150) )
       )
     }
     "select with/without DISTINCT" in {
@@ -89,7 +96,7 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
       constructedGraph must be_=~( expectedGraph )
     }
     "construct graphs using predicate trees" in {
-      val ptree = PredicateTree( Likes, Spouse-Likes )
+      val ptree = PredicateTree( Likes, Spouse~Likes )
       val constructedGraph = Sparql construct ptree from john
       val expectedGraph = new Model
       expectedGraph addAll List( 

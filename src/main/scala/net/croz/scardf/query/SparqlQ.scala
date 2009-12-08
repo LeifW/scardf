@@ -39,7 +39,7 @@ abstract class SparqlQ[+T <: SparqlQ[T]] extends util.Logging {
     
   def appendTriplet( sbuffer: StringBuffer, s: Any, p: Any, o: Any ): T = {
     val segments = List( s, p, o ) map rendering
-    sbuffer append segments.reduceLeft{ (x: String, y: String) => x + " " + y } + ". "
+    sbuffer append segments.reduceLeft{ (x: String, y: String) => x + " " + y } + " . "
     this.asInstanceOf[T]
   }
 
@@ -131,7 +131,7 @@ class SelectOptionQ[T]( converter: NodeConverter[T] ) extends BaseSelectQ[Select
 
 abstract class BaseExtractQ[T <: BaseExtractQ[T]]( val r: Res, replaces: Map[Res, QVar] )
 extends BaseSelectQ[T] {
-  selectExprs = List( X )
+  selectExprs = List( distinct( X ) )
   private var condStr = r.model.dumpedIn( "N-TRIPLE" ).replaceAll( "\\s+", " " )
   condStr = replaceVar( condStr, r, X )
   for ( pair <- replaces )

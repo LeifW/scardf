@@ -1,13 +1,17 @@
 package net.croz.scardf
 
 import org.joda.time.LocalDate
-import org.specs._
-import org.specs.runner.JUnit4
 
-class LitSpecTest extends JUnit4( LitSpec )
+class LitSpecTest extends org.specs.runner.JUnit4( LitSpec )
 
-object LitSpec extends Specification {
+object LitSpec extends org.specs.Specification {
   "Literals" should {
+    "be created from String" in {
+      Lit( "example" ).rendering must_== "\"example\""
+    }
+    "be created from String with Lang" in {
+      Lit( "example", Lang.en ).rendering must_== "\"example\"@en"
+    }
     "be created from Boolean" in {
       Lit( true ).rendering must_== "true"
     }

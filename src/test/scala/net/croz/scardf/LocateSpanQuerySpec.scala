@@ -9,7 +9,7 @@ object LocateSpanQuerySpec extends org.specs.Specification with specs.RdfMatcher
 
   "query system" should {
     val template = Blank( Likes -> Swimming ).root
-    val ptree = PredicateTree( Name-(Given, Family), Height )
+    val ptree = PredicateTree( Name~(Given, Family), Height )
     
     "select some" in {
       val qLikes = QVar()

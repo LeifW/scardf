@@ -79,6 +79,15 @@ class Model( val jModel: JModel ) extends util.Logging {
   
   def ++( other: Model ) = jModel add other.jModel
   
+  def listRes( assignment: Pair[Prop, Any] ) = { 
+    val jp = assignment._1.jProperty
+    val result = assignment._2 match {
+      case n: Node => jModel.listResourcesWithProperty( jp, n.jNode )
+      case o => jModel.listResourcesWithProperty( jp, o )
+    }
+    new RichResIterator( result ) 
+  }
+
   def local = Model( jModel match {
     case om: OntModel => om.getBaseModel
     case m => m
@@ -127,6 +136,7 @@ object Model {
              else mapping.getOrElse( jm, new Model( jm ) )
     rm
   }
+  def newDefault = new Model( ModelFactory.createDefaultModel )
   
   def construct( expr: => Any ) = {
     implicit val model = new Model

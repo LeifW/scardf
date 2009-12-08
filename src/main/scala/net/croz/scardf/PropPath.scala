@@ -12,11 +12,11 @@ object PropPath {
  * a.k.a. a predicate chain.
  */
 case class PropPath( propList: List[Prop] ) extends Seq[Prop] with PredicateChain {
-  def -( p: Prop ) = new PropPath( propList ::: List( p ) )
-  def -( pp: PropPath ) = new PropPath( propList ::: pp.propList )
-  def -( t: PredicateTree ) = PredicateTree.prependTree( this, t )
-  def -( t: PredicateTree, moretrees: PredicateTree* ): PredicateTree = 
-    this - moretrees.foldLeft( t )( _ ++ _ )
+  def ~( p: Prop ) = new PropPath( propList ::: List( p ) )
+  def ~( pp: PropPath ) = new PropPath( propList ::: pp.propList )
+  def ~( t: PredicateTree ) = PredicateTree.prependTree( this, t )
+  def ~( t: PredicateTree, moretrees: PredicateTree* ): PredicateTree = 
+    this ~ moretrees.foldLeft( t )( _ ++ _ )
 
   def prepend( other: PropPath ) = PropPath( other.propList ::: propList )
   def subpath( start: Int, finish: Int ) = PropPath( propList.slice( start, finish ).toList )

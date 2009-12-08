@@ -46,6 +46,6 @@ object FamilyVocabulary extends Vocabulary( "http://family.eg#" ) {
     Likes -> Swimming,
     Children -> RdfList( anna, bob ), Spouse -> john
   )
-  List( anna, bob, jane, john ) foreach { (Name-Family)( _ ) = "Doe" }
+  List( anna, bob, jane, john ) foreach { (Name~Family)( _ ) = "Doe" }
   john/Children/asRdfList foreach { n => Father( n.asRes ) = john }
 }

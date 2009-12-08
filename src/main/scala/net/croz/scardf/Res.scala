@@ -3,8 +3,7 @@ package net.croz.scardf
 import org.joda.time.LocalDate
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import com.hp.hpl.jena.rdf.model.RDFNode
-import com.hp.hpl.jena.rdf.model.Resource
+import com.hp.hpl.jena.rdf.model.{ RDFNode, Resource, ResIterator }
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype._
 import scala.collection.mutable.{Set => MSet}
 
@@ -19,7 +18,10 @@ extends Node( jResource ) with util.Logging {
   
   def apply( m: Model ) = this in m
 
-  def has( assignment: (Prop, Any) ) = this( assignment )?
+  def has( assignment: (Prop, Any) ) = assignment match {
+    case (p, None) => !valuesOf( p ).hasNext
+    case _ => this( assignment )?
+  }
   
   override def /( p: Prop ): NodeBag = new NodeBag( valuesOf( p ).toList )
   override def /( pp: PropPath ): NodeBag = pp.foldLeft( NodeBag( this ) ){ _/_ }
@@ -47,16 +49,32 @@ extends Node( jResource ) with util.Logging {
     this
   }
   
+  /**
+   * <ul>
+   *   <li>Scardf or Jena node - assign this node</li>
+   *   <li>All object - assign each value in All</li>
+   *   <li>an Option - assign some value if defined, skip if None</li>
+   *   <li>a tuple - assign each tuple member</li>
+   *   <li>a string - assign string as prop is typed, or xsd:string if no type is specified</li>
+   *   <li>a LangStr - assign string value in a language</li>
+   *   <li>a Boolean</li>
+   *   <li>an Int</li>
+   *   <li>a LocalDate</li>
+   *   <li>a DateTime</li>
+   *   <li>otherwise, throw a RuntimeException</li>
+   * </ul>
+   */
   def assign( prop: Prop, value: Any ): Res = {
     value match {
       case n: Node      => jResource.addProperty( prop, n.jNode )
       case jn: RDFNode  => jResource.addProperty( prop, jn )
       case all: All     => for ( n <- all.nodes ) assign( prop, n )
+      case Some( x )    => assign( prop, x )
+      case None         => // ignore assignment
       case (a, b)       => assign( prop, a ); assign( prop, b )
       case (a, b, c)    => assign( prop, a ); assign( prop, b ); assign( prop, c )
       case (a, b, c, d) => assign( prop, All( a, b, c, d ) )
       case s: String    => jResource.addProperty( prop, s, prop.datatype.getOrElse( XSDstring ) )
-      case ls: LangStr  => jResource.addProperty( prop, ls.str, ls.lang )
       case b: Boolean   => jResource.addProperty( prop, b.toString, XSDboolean )
       case i: Int       => jResource.addProperty( prop, i.toString, XSDint )
       case d: LocalDate => jResource.addProperty( prop, d.toString, XSDdate )
@@ -65,6 +83,8 @@ extends Node( jResource ) with util.Logging {
     }
     this
   }
+  
+  def -( p: Prop ) = ResPropPair( this, p )
 
   def isOfType( checkType: Res ) = this/RDF.Type contains checkType
 
@@ -108,6 +128,7 @@ object Res {
   def apply( r: Resource, m: Model ) = m getRes r
   
   implicit def toRes( r: Resource ) = apply( r )
+  implicit def toNodeBag( rri: RichResIterator ) = new NodeBag( rri.toList )
 }
 
 object Anon {
@@ -150,6 +171,9 @@ class Subgraph {
   }
 }
 
-case class HasStmtBase( s: Res, p: Prop ) {
-  def -> ( o: Any ): Boolean = Stmt( s, p, o )?
+class RichResIterator( jIterator: ResIterator ) extends Iterator[Res] {
+  override def hasNext = jIterator.hasNext
+  override def next = Res( jIterator.next.asInstanceOf[Resource] )
 }
+
+case class ResPropPair( s: Res, p: Prop )

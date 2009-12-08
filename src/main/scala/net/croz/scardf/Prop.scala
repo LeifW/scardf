@@ -11,8 +11,9 @@ class Prop( val jProperty: Property, m: Model ) extends Res( jProperty, m ) with
   def of( res: Res ) = res/this/!
   def ? = new NodeConverter[Boolean]( x => (x/this/!).asBoolean )
   //def ->>( values: Any* ) = for ( v <- values ) yield (this, v)
-  def -( p: Prop ) = PropPath( this, p )
-  def -( subtrees: PredicateTree* ) = PredicateTree( this -> subtrees.reduceLeft( _ ++ _ ) )
+  def ~( p: Prop ) = PropPath( this, p )
+  def ~( subtrees: PredicateTree* ) = PredicateTree( this -> subtrees.reduceLeft( _ ++ _ ) )
+//  def ~( reqs: PredicateTree* )( opts: PredicateTree* ) = OptPredicateTree( reqs:_* )( opts:_* )
 
   def apply( node: Node ): Node = node.asRes/this/!
   def update( res: Res, value: Any ) = res state this -> value
