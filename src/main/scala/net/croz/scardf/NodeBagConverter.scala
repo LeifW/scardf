@@ -51,6 +51,7 @@ extends NodeBagConverter[T]( bag => fn( bag.singleNode ) )
 
 object asRes extends NodeConverter[Res]( _.asRes )
 object asProp extends NodeConverter[Prop]( _.asProp )
+object asLit extends NodeConverter[Lit]( _.asLit )
 object asString extends NodeConverter[String]( _.asString )
 object asBoolean extends NodeConverter[Boolean]( _.asBoolean )
 object asInt extends NodeConverter[Int]( _.asInt )
