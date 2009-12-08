@@ -26,13 +26,13 @@ class Node( val jNode: RDFNode ) {
     else false
   
   def rendering: String = {
-    if ( jNode.isLiteral ) asLit.rendering
-    else if ( jNode.isResource ) asRes.rendering
+    if ( isLit ) asLit.rendering
+    else if ( isRes ) asRes.rendering
     else "?node?"
   }
   
   def lexic = 
-    if ( jNode.canAs( classOf[String] ) ) asString
+    if ( isLit && asLit.isString ) asString
     else rendering
 
   private def asLiteral: Literal = jNode.as( classOf[Literal] ).asInstanceOf[Literal]

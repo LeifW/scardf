@@ -5,10 +5,12 @@ import org.joda.time.LocalDate
 
 class Lit( val jLiteral: Literal ) extends Node( jLiteral ) {
   override def rendering: String = {
-    if ( jLiteral.getValue.getClass == classOf[String] )
+    if ( isString )
       "\"" + asString + "\"" + ( if (lang.isDefined) {"@" + lang.get.code} else "" )
-    else jLiteral.getLexicalForm
+    else 
+      jLiteral.getLexicalForm
   }
+  def isString = jLiteral.getValue.getClass == classOf[String]
 
   val datatype = jLiteral.getDatatype
   val lang: Option[Lang] = {
