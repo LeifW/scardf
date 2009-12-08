@@ -1,14 +1,9 @@
 package net.croz.scardf.query
 
 import com.hp.hpl.jena.rdf.model.Resource
-import com.hp.hpl.jena.query.Query
-import com.hp.hpl.jena.query.QueryExecution
-import com.hp.hpl.jena.query.QueryExecutionFactory
-import com.hp.hpl.jena.query.QueryFactory
-import com.hp.hpl.jena.query.QueryParseException
-import com.hp.hpl.jena.query.QuerySolution
-import com.hp.hpl.jena.query.QuerySolutionMap
-import com.hp.hpl.jena.query.ResultSet
+import com.hp.hpl.jena.query.{
+  Query, QueryExecution, QueryExecutionFactory, QueryFactory, QueryParseException, QuerySolutionMap
+}
 
 abstract class SparqlQ[+T <: SparqlQ[T]] extends util.Logging {
   var conditions = new StringBuffer()
