@@ -29,13 +29,3 @@ object RdfList {
     model getRdfList jList
   }
 }
-
-/**
- * Converts single node to a list.
- */
-object asRdfList extends NodeConverter[RdfList] ( _.asRdfList )
-
-/**
- * Converts single node to a new bag containing its list elements.
- */
-object asRdfListBag extends NodeConverter[NodeBag] ( _.asRdfList.toNodeBag )
