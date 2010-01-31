@@ -46,6 +46,8 @@ class Model( val jModel: JModel ) extends util.Logging {
   
   def getRes( uri: String ): Res = getRes( jModel.getResource( this.prefix + uri ) )
   
+  def /( res: Res ) = getRes( res.jResource )
+  
   private def newRes( jResource: Resource ) = {
     if ( jResource.canAs( classOf[RDFList] ) )
       new RdfList( jResource.as( classOf[RDFList] ).asInstanceOf[RDFList], this )
@@ -77,7 +79,7 @@ class Model( val jModel: JModel ) extends util.Logging {
   
   def addAll( stmts: List[Stmt] ) = stmts map add
   
-  def ++( other: Model ) = jModel add other.jModel
+  def ++( other: Model ) = Model( jModel add other.jModel )
   
   def listRes( assignment: Pair[Prop, Any] ) = { 
     val jp = assignment._1.jProperty
