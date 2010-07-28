@@ -5,6 +5,8 @@ import org.specs._
 import org.specs.runner.JUnit4
 import NodeConverter._
 
+class PrimerSpecsTest extends JUnit4(PrimerSpecs)
+
 object PrimerSpecs extends Specification {
   "NodeBag" should {
     import PeopleVoc._

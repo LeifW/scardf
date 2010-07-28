@@ -8,6 +8,8 @@ import NodeConverter._
 import PeopleVoc._
 import Doe._
 
+class ConverterSpecsTest extends JUnit4(ConverterSpecs)
+
 object ConverterSpecs extends Specification {
   val g = Doe.graph
   "value converters" should {

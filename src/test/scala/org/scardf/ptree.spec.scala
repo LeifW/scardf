@@ -8,6 +8,8 @@ import NodeConverter._
 import PeopleVoc.{ name => n, _ }
 import Doe._
 
+class PtreeSpecsTest extends JUnit4(PtreeSpecs)
+
 object PtreeSpecs extends Specification {
   val g = Doe.graph
   "Predicate tree" should {
