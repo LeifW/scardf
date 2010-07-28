@@ -79,7 +79,7 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
         Map( person -> bob ), 
         Map( person -> jane, spouse -> john ),
         Map( person -> john, spouse -> jane )
-      )   
+      )
     }
     "ask queries" in {
       Sparql ask( (john, Likes, Science) ) in data must_== true

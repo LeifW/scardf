@@ -29,6 +29,13 @@ sealed abstract case class Node() extends TermPlace {
 }
 
 object Node {
+  /**
+   * Constructs a node from given value.
+   * <li>for a Node, returns it</li>
+   * <li>for a GraphNode, returns its node</li>
+   * <li>for a String, Int, Long, BigInt, BigDecimal, Boolean, LocalDate, returns it as a typed literal</li>
+   * <li>for other values, throws an IllegalArgumentException</li>
+   */
   def from( a: Any ): Node = {
     import Literal._
     a match {
@@ -41,8 +48,32 @@ object Node {
       case d: BigDecimal => toTypedLiteral( d )
       case b: Boolean => toTypedLiteral( b )
       case ld: LocalDate => toTypedLiteral( ld )
-      case x => throw new RuntimeException( "Cannot convert " + x + " to Node" )
+      case x: AnyRef => throw new IllegalArgumentException( "Cannot convert " + x + " of " + x.getClass + " to Node" )
+      case x => throw new IllegalArgumentException( "Cannot convert " + x + " to Node" )
     }
+  }
+
+  /**
+   * Checks if given node matches given template (any object).
+   * <li>every node matches object Node</li>
+   * <li>every literal node matches object Literal</li>
+   * <li>every subject node matches object SubjectNode</li>
+   * <li>every blank node matches object Blank</li>
+   * <li>if template is a node, parameters are checked for equality</li>
+   * <li>if template is a graph node, its node is checked for equality</li>
+   * <li>if template is function of Node to Boolean, this function is applied to tested node</li>
+   * <li>in all other cases, a node is constructed from the template object, and this is compared to the tested node</li>
+   */
+  def matches( template: Any, n: Node ): Boolean = template match {
+    case Node => true
+    case Literal => n.isLiteral
+    case SubjectNode => !n.isLiteral
+    case UriRef => !n.isBlank && !n.isLiteral
+    case Blank => n.isBlank
+    case m: Node => m == n
+    case gn: GraphNode => gn.node == n
+    case fn: Function[Node, Boolean] => fn( n )
+    case v => (Node from v) == n
   }
 }
 
@@ -74,6 +105,16 @@ case class UriRef( uri: String ) extends SubjectNode with NodeToBagConverter {
   def ? = PredicateTree.opt( this -> PredicateTree.empty )
   
   override def rend = "<" + uri + ">"
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[UriRef]
+
+  override def equals(other: Any): Boolean =
+    other match {
+      case that: UriRef => (that canEqual this) && this.uri == that.uri
+      case _ => false
+    }
+ 
+  override def hashCode = uri.hashCode
   
   override val toString = rend
 }

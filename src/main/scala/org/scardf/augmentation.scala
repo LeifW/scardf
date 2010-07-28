@@ -52,7 +52,7 @@ abstract class PredAugmenter( pred: UriRef ) extends Augmenter {
     case _ => false
   } map { t => {
     val ( p, o ) = augment( t.obj(g) )
-    Triple( t.sub, p, o ) 
+    Triple( t.subj, p, o ) 
   } }
 }
 

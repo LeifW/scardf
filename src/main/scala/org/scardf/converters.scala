@@ -1,6 +1,6 @@
 package org.scardf
 
-import org.joda.time.LocalDate
+import org.joda.time.{LocalDate, DateTime}
 import org.joda.time.format.ISODateTimeFormat.{date => IsoFormat}
 
 /**
@@ -52,6 +52,9 @@ extends NodeBagConverter[NodeBag] {
   def apply( bag: NodeBag ) = NodeBag( bag.nodes filter{ n => ffn( n(bag.graph) ) }, bag.graph ) 
 }
 
+/**
+ * Filter factory object.
+ */
 object having {
   def apply( pred: UriRef ) = new NodeFilter( _ match {
     case gn: GraphNode => !(gn/pred).isEmpty
@@ -112,6 +115,8 @@ class TypeNodeConverter[T]( typename: String, typeUri: UriRef, fn: String => T )
     case PlainLiteral( lf, _ ) => try { fn(lf) } catch { case e => throwException( l ) }
     case _ => throwException( l )
   }
+  
+  def pfn( f: T => Boolean ): Literal => Boolean = { l: Literal => f( convertLiteral(l) ) }
 }
 
 object NodeConverter {
@@ -180,5 +185,8 @@ object NodeConverter {
     new TypeNodeConverter[Boolean]( "a boolean", XSD.boolean, _.toBoolean )
   implicit val asLocalDate = new TypeNodeConverter[LocalDate](
     "a date", XSD.date, IsoFormat.parseDateTime( _ ).toLocalDate
+  )
+  implicit val asDateTime = new TypeNodeConverter[DateTime](
+    "date and time", XSD.dateTime, IsoFormat.parseDateTime( _ )
   )
 }

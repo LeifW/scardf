@@ -23,6 +23,7 @@ class QVar( val name: String ) {
     case that: QVar => this.name == that.name
     case _ => false
   }
+
   override def hashCode = name.hashCode
 
   override val toString = "?" + name

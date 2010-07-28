@@ -162,11 +162,26 @@ class ConstructQ( triplets: (Any, Any, Any)* ) extends SparqlQ[ConstructQ] {
 }
 
 class PTreeConstructQ( ptree: PredicateTree ) extends SparqlQ[PTreeConstructQ] {
+  var lang: Lang = null
+  var langVars = List[Any]()
+  
+  def filter( lang: Lang, qv: Any* ) = {
+    this.lang = lang
+    this.langVars = qv.toList
+  }
+  
+  def constructFilter = 
+    if ( langVars.isEmpty ) ""
+    else {
+      "FILTER (" + langVars.map{rendering(_)} + ") "
+    } 
+  
   def from( anchor: Res ) = {
-    var constructions, required, optionals = new StringBuffer()
+    var constructions = new StringBuffer()
     val allTriplets = TripletFactory tripletsFrom ptree.growTemplateFrom( anchor ).model
     appendTriplets( constructions, allTriplets: _* )
-    val query = "CONSTRUCT { " + constructions + "} WHERE { " + constructions + "}"
+    val query = "CONSTRUCT { " + constructions + "} WHERE { " + constructions + " " +
+      constructFilter + "}"
     val markStart = System.currentTimeMillis
     val result = Model( execution( anchor.model, query ).execConstruct )
     log info "Span construction took " + (System.currentTimeMillis - markStart) + " ms"

@@ -63,5 +63,27 @@ object PrimerSpecs extends Specification {
         familyMembers/having( weight -> None ) must_== familyMembers
       }
     }
+    "triple matching" in {
+      val g = Doe.graph
+      "pattern matching" in {
+        g.triples filter { _ match {
+          case Triple( `anna`, `height`, _ ) => true
+          case _ => false
+        } }
+        g.triplesMatching {
+          case Triple( `anna`, `height`, _ ) => true
+        }.toList must_== List( Triple( anna, height, Node from 107 ) )
+        g.triplesMatching {
+          case Triple( _, `height`, h: Literal ) => asInt(h) < 100
+        }.map{ _.subj }.toList must_== List( bob )
+      }
+      "triplesLike with Node placeholder" in {
+        g.triplesLike( anna, height, Node ).toList.size must_== 1
+        g.triplesLike( anna, height, Node ).toList must_== List( Triple( anna, height, Node from 107 ) )
+      }
+      "triplesLike with a closure" in {
+        g.triplesLike( Node, height, { h: Literal => asInt(h) < 100 } ).map{ _.subj }.toList must_== List( bob )
+      }
+    }
   }
 }

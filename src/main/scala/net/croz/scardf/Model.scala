@@ -16,7 +16,7 @@ class Model( val jModel: JModel ) extends util.Logging {
   val internalId = Model.rnd.nextLong
   Model remember this
 
-  var prefix = ""
+//  var prefix = ""
   
   val mapping = scala.collection.mutable.Map[RDFNode, Node]()
   val stmtMapping = scala.collection.mutable.Map[Statement, Stmt]()
@@ -28,7 +28,7 @@ class Model( val jModel: JModel ) extends util.Logging {
   def regNs( pvMappings: Pair[String, Vocabulary]* ): Unit = 
     regNs( Map( pvMappings map { p => (p._1, p._2.prefix) }: _* ) )
     
-  def withPrefix( prefix: String ) = { this.prefix = prefix; this }
+  //def withPrefix( prefix: String ) = { this.prefix = prefix; this }
   
   private def remember( r: Res ) = {
     //log.info( hashCode + " " + r + " " + mapping )
@@ -39,17 +39,15 @@ class Model( val jModel: JModel ) extends util.Logging {
   def getAnon() = remember( new Res( jModel.createResource( new AnonId() ), this ) )
   def getAnon( id: String ) = remember( new Res( jModel createResource new AnonId( id ), this ) )
   
-  def getRes( jRes: Resource ): Res = {
-    //log.info( this + " " + jRes + " " + (mapping get jRes) + " " + mapping )
+  def getRes( jRes: Resource ): Res =
     mapping.getOrElseUpdate( jRes, newRes( jRes ) ).asInstanceOf[Res]
-  }
   
-  def getRes( uri: String ): Res = getRes( jModel.getResource( this.prefix + uri ) )
+  def getRes( uri: String ): Res = getRes( jModel.getResource( uri ) )
   
-  def /( res: Res ) = getRes( res.jResource )
+  def /( res: Res ) = getRes( res.uri )
   
   private def newRes( jResource: Resource ) = {
-    if ( jResource.canAs( classOf[RDFList] ) )
+	if ( jResource.canAs( classOf[RDFList] ) )
       new RdfList( jResource.as( classOf[RDFList] ).asInstanceOf[RDFList], this )
     else if ( jResource.canAs( classOf[Property] ) )
       new Prop( jResource.as( classOf[Property] ).asInstanceOf[Property], this )
@@ -61,7 +59,7 @@ class Model( val jModel: JModel ) extends util.Logging {
   
   def getProp( jProp: Property ): Prop = 
     mapping.getOrElseUpdate( jProp, new Prop( jProp, this ) ).asInstanceOf[Prop]
-  def getProp( uri: String ): Prop = getProp( jModel.getProperty( this.prefix + uri ) )
+  def getProp( uri: String ): Prop = getProp( jModel.getProperty( uri ) )
 
   def getRdfList( jRdfList: RDFList ): RdfList = {
     //log.info( this, "get list", jRdfList, mapping.get(jRdfList), mapping )
@@ -78,6 +76,10 @@ class Model( val jModel: JModel ) extends util.Logging {
   def add( stmt: Stmt ) = jModel add stmt.jStatement
   
   def addAll( stmts: List[Stmt] ) = stmts map add
+  
+  def remove( stmt: Stmt ) = jModel remove stmt.jStatement
+  
+  def removeAll( stmts: List[Stmt] ) = stmts map remove
   
   def ++( other: Model ) = Model( jModel add other.jModel )
   

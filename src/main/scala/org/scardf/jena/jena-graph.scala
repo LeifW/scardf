@@ -10,6 +10,28 @@ class JenaGraph( private val m: Model ) extends Graph {
 
   def triples = new JenaTripleIterator( m.listStatements ).toList
 
+  override def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[Triple] = {
+    import Node.matches
+    val tt = new JenaTripleIterator( m.listStatements( 
+      sp match {
+        case n: SubjectNode => resource( n )
+        case _ => null
+      }, 
+      pp match {
+        case n: UriRef => property( n )
+        case _ => null
+      }, 
+      op match {
+        case n: Node => rdfnode( n )
+        case _ => null
+      } 
+    ) )
+    tt.filter{
+      case Triple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) 
+      case _ => false
+    }.toList
+  }
+
   def contains( t: Triple ) = m contains statement( t )
 
   override def +( t: Triple ) = {
@@ -27,7 +49,7 @@ class JenaGraph( private val m: Model ) extends Graph {
   override def queryEngineOpt = Some( new JenaArq( m ) )
   
   def statement( t: Triple ): Statement = 
-    m.createStatement( resource( t.sub ), property( t.pred ), rdfnode( t.obj ) )
+    m.createStatement( resource( t.subj ), property( t.pred ), rdfnode( t.obj ) )
   
   def resource( sn: SubjectNode ) = sn match {
     case b: Blank => m createResource new AnonId( b.id )

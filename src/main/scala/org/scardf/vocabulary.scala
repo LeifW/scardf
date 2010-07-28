@@ -26,7 +26,8 @@ case object XSD extends Vocabulary( "http://www.w3.org/2001/XMLSchema#" ) {
 }
 
 case object RDF extends Vocabulary( "http://www.w3.org/1999/02/22-rdf-syntax-ns#" ) {
-  val Type = RDF÷"type"
+  val Type = prop( "type" )
+  val ID = RDF÷"ID"
   val nil = RDF÷"nil"
   val first = RDF÷"first"
   val rest = RDF÷"rest"

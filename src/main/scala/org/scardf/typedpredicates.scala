@@ -8,7 +8,7 @@ import NodeConverter._
  * Use method {#v} to create an appropriate {NodeToValueConverter}
  * (as UriRefs are {NodeToBagConverter}s).
  */
-case class Property[T]( override val uri: String )( implicit nc: NodeToValueConverter[T] )
+case class Property[T]( override val uri: String )( implicit val nc: NodeToValueConverter[T] )
 extends UriRef( uri ) {
   /**
    * Applies this predicate and node-to-value converter.

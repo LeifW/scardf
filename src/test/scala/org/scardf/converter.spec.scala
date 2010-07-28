@@ -32,14 +32,16 @@ object ConverterSpecs extends Specification {
     ".option" in {
       g/bob/likes.option must_== None
     }
-    ".set" in {
+    "with .n modifier, get node" in {
       g/anna/likes.n must_== swimming
     }
     "with .v modifier, convert node to value" in {
       g/john/height.v must_== 167
     }
-    "convert bag to bag" in {
+    "list all values for fixed predicate" in {
       g/-/height must_== g.bagOf( 99, 107, 150, 167 )
+    }
+    "list all values for fixed predicate, multiple values" in {
       g/-/likes must_== g.bagOf( swimming, swimming, swimming, science )
     }
     "distinct filter" in {

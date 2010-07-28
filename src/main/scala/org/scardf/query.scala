@@ -43,10 +43,25 @@ extends Tuple3[TermPlace, TermPlace, TermPlace](s, p, o)
   lazy val rend = s.rend + " " + p.rend + " " + o.rend + " ."
 }
 
+case class TemplateGraph( v: QVar, ttriples: Iterable[TemplateTriple] ) {
+  def rend = ttriples map {_.rend} mkString "\n"
+  
+  private def queryResult( dg: Graph ) = {
+    val selectQ = "SELECT " + v.rend + " WHERE {" + rend + "}"
+    val qresult = dg.queryEngineOpt.get.select(selectQ)
+    println( selectQ, qresult )
+    qresult
+  }
+  
+  def findIn( dg: Graph ): Node = queryResult(dg)(0)(v)
+  def findAllIn( dg: Graph ): List[Node] = queryResult(dg) map { _.apply(v) }
+}
+
 object TemplateFactory {
-  def templateFrom( g: Graph ): Iterable[TemplateTriple] = {
+  def apply( assignments: Pair[Blank, QVar]* ) = {
     val tf = new TemplateFactory
-    g.triples map{ tf( _ ) }
+    tf.varMap ++ assignments
+    tf
   }
 }
 
@@ -58,7 +73,12 @@ class TemplateFactory {
     case other => other
   }
   
-  def apply( t: Triple ) = TemplateTriple( replaced( t.sub ), t.pred, replaced( t.obj ) )
+  def apply( t: Triple ): TemplateTriple = TemplateTriple( replaced( t.subj ), t.pred, replaced( t.obj ) )
+  
+  def apply( g: Graph ): TemplateGraph = varMap.toList match {
+    case List( Pair( _, v ) ) => TemplateGraph( v, g.triples map apply )
+    case _ => null //TODO ???
+  }
 }
 
 trait QueryEngine {

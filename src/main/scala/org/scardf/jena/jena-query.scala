@@ -34,7 +34,12 @@ case class QSolution( jSolution: QuerySolution, m: Model ) {
    */
   def get( key: String ) = {
     val solution = jSolution.get( key )
-    if ( solution == null ) None else Some( Node from solution )
+    if ( solution == null ) None else Some( converted( solution ) )
+  }
+  
+  def converted( jenaX: Any ) = jenaX match {
+    case jnode: RDFNode => Jena.node( jnode )
+    case x => Node from x
   }
 
   /**

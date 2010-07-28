@@ -176,4 +176,6 @@ class RichResIterator( jIterator: ResIterator ) extends Iterator[Res] {
   override def next = Res( jIterator.next.asInstanceOf[Resource] )
 }
 
-case class ResPropPair( s: Res, p: Prop )
+case class ResPropPair( s: Res, p: Prop ) {
+  def ->( o: Any ) = s.state( p -> o)
+}

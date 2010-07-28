@@ -25,22 +25,22 @@ object FamilyVocabulary extends Vocabulary( "http://family.eg#" ) {
   private val aMale = IsMale -> true
   private val aFemale = IsMale -> false
   
-  val anna = Res( "anna" ) a Person state(
+  val anna = pRes( "anna" ) a Person state(
     Name -> Anon( Given -> "Anna" ),
     aFemale, Birthday -> "2004-04-14", Height -> 107,
     Likes -> Swimming
   )
-  val bob = Res( "bob" ) a Person state(
+  val bob = pRes( "bob" ) a Person state(
     Name -> Anon( Given -> "Bob" ),
     aMale, Birthday -> "2007-05-18", Height -> 87
   )
-  val john = Res( "jdoe" ) a Person state(
+  val john = pRes( "jdoe" ) a Person state(
     Name -> Anon( Given -> "John" ),
     aMale, Birthday -> "1977-07-27", Height -> 167,
     Likes -> ( Swimming, Science ),
-    Children -> RdfList( anna, bob ), Spouse -> Res( "jane" )
+    Children -> RdfList( anna, bob ), Spouse -> pRes( "jane" )
   )
-  val jane = Res( "jane" ) a Person state(
+  val jane = pRes( "jane" ) a Person state(
     Name -> Anon( Given -> "Jane" ),
     aFemale, Birthday -> "1976-06-26", Height -> 150,
     Likes -> Swimming,

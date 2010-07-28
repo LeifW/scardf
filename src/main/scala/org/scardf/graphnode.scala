@@ -4,7 +4,7 @@ import scala.collection.mutable.{Set => MSet}
 
 case class GraphNode( node: SubjectNode, graph: Graph ) extends NodeFromGraph {
   override def /( ur: UriRef ) = 
-    NodeBag( graph.triples.filter{ t => t.sub == node && t.pred == ur }.map{ _.obj }.toList, graph )
+    NodeBag( graph.triplesLike( node, ur, Node ).map{ _.obj }.toList, graph )
   
   def /[T]( nbc: NodeBagConverter[T] ): T = graph.bagOf( node )/nbc
   
@@ -12,16 +12,29 @@ case class GraphNode( node: SubjectNode, graph: Graph ) extends NodeFromGraph {
   
   def -( poPairs: Pair[ UriRef, Any ]* ) = node -( poPairs: _* )
 
-  def has( a: Pair[ UriRef, Any ] ) = a match {
+  /**
+   * Does node has given assignment in its graph?
+   * has( null -> _ ) throws an IllegalArgumentException.
+   * has( p -> null ) always yields true, for a not-null p.
+   * Options are treated specially: has( p -> None ) returns true iff there are
+   * NO valuesOf p in graph; has( p -> Some(o) ) is reduced to has( p -> o ).
+   * @see #valuesOf
+   */
+  def has( a: Pair[ UriRef, Any ] ): Boolean = a match {
+    case (null, _) => throw new IllegalArgumentException( "GraphNode.has requires predicate" )
+    case (_, null) => true
     case (p, None) => valuesOf( p ).isEmpty
-    case _ => graph contains Triple( node, a._1, Node from a._2 )
+    case (p, Some( o )) => has( p -> o )
+    case (p, o) => graph contains Triple( node, p, Node from o )
   }
 
+  /**
+   * Iterable of all object nodes in this graph from triples
+   * containing this node as subject and given UriRef as predicate.
+   * @see #node
+   */
   def valuesOf( predicate: UriRef ): Iterable[Node] =
-    graph.triples filter { 
-      case Triple( `node`, `predicate`, o ) => true
-      case _ => false
-    } map { _.obj }
+    graph.triplesLike( node, predicate, Node ) map { _.obj }
   
   /**
    * Subgraphed node N in G is the same N in another graph S which is a subgraph of G
@@ -39,10 +52,10 @@ case class GraphNode( node: SubjectNode, graph: Graph ) extends NodeFromGraph {
     println( subgraph.rend, covered )
     if ( covered contains this.node ) return
     else covered += this.node
-    val outlinks = graph.filterT{ case Triple( this.node, _, _ ) => true }.triples
+    val outlinks = graph.triplesLike( this.node, Node, SubjectNode )
     val connectedNodes = MSet[GraphNode]()
     for ( s <- outlinks ) {
-      if ( !s.obj.isLiteral ) connectedNodes += s.obj( graph ).asInstanceOf[GraphNode]
+      connectedNodes += s.obj( graph ).asInstanceOf[GraphNode]
       subgraph + s
     }
     connectedNodes map { _.spreadTo( subgraph, covered ) }

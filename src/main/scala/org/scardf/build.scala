@@ -23,6 +23,10 @@ case class Branch( root: SubjectNode, assignments: Pair[ UriRef, Twig ]* ) exten
   
   override def values = Set( root )
   
+  /** Creates a new branch with the same root and some additional assignments */
+  def ++( additional: Pair[ UriRef, Twig ]* ) =
+    new Branch( root, assignments ++ additional: _* )
+  
   def toGraph = Graph( triples )
 
   def rend = root + ": " + assignments
@@ -30,7 +34,7 @@ case class Branch( root: SubjectNode, assignments: Pair[ UriRef, Twig ]* ) exten
 
 object Branch {
   
-  implicit def toBranch( t: Triple ) = Branch( t.sub, t.pred -> ObjSet( t.obj ) )
+  implicit def toBranch( t: Triple ) = Branch( t.subj, t.pred -> ObjSet( t.obj ) )
   
   def of( root: SubjectNode, assignments: Seq[ Pair[ UriRef, Twig ] ] ) =
     Branch( root, assignments: _* )

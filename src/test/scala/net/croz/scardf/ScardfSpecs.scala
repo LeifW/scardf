@@ -29,7 +29,7 @@ object ScardfSpecs extends Specification {
     }
   }
   "Constructed graph" should {
-    implicit val model = new Model() withPrefix "example:"
+    implicit val model = new Model() //withPrefix "example:"
     import PeopleVocabulary._
     val jdoe = Res( "jdoe" ) a Person state(
       Name -> Anon(
@@ -73,8 +73,8 @@ object ScardfSpecs extends Specification {
       (jdoe/Children/asRdfList).toList must_== List( Res( "anna" ), Res( "bob" ) )
     }
     "sparql query heighest" in {
-      val selectHeighest = Sparql select 'person where( ('person, Height, 'h) ) orderBy desc( 'h ) limit 1
-      val results = selectHeighest from model
+      val selectHighest = Sparql select 'person where( ('person, Height, 'h) ) orderBy desc( 'h ) limit 1
+      val results = selectHighest from model
       results.solutions must_== List( Map( QVar( "person" ) -> jdoe ) )
     }
     "sparql query select X" in {
