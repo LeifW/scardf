@@ -61,7 +61,8 @@ object Node {
    * <li>every blank node matches object Blank</li>
    * <li>if template is a node, parameters are checked for equality</li>
    * <li>if template is a graph node, its node is checked for equality</li>
-   * <li>if template is function of Node to Boolean, this function is applied to tested node</li>
+   * <li>if template is function of Node to Boolean, this function is applied to tested node;
+   * any exception thrown from this function is absorbed and <code>false</code> is returned</li>
    * <li>in all other cases, a node is constructed from the template object, and this is compared to the tested node</li>
    */
   def matches( template: Any, n: Node ): Boolean = template match {
@@ -72,7 +73,7 @@ object Node {
     case Blank => n.isBlank
     case m: Node => m == n
     case gn: GraphNode => gn.node == n
-    case fn: Function[Node, Boolean] => fn( n )
+    case fn: Function[Node, Boolean] => try { fn( n ) } catch { case e: Exception => false }
     case v => (Node from v) == n
   }
 }
