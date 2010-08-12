@@ -89,18 +89,14 @@ trait Graph {
   override def toString = "Graph[ " + size + " triples ]"
 }
 
-class SetGraph( tset: Set[Triple] ) extends Graph {
-  val index = new NodeIndex( tset )
-
-  def triples = tset
-  def +( t: Triple ): SetGraph = new SetGraph( Set( t ) ++ tset )
-  def ++( ts: Iterable[Triple] ) = new SetGraph( tset ++ ts )
-  override def ++( g: Graph ): SetGraph = this ++ g.triples
-  override def contains( t: Triple ) = tset contains t
+trait IndexedGraph extends Graph {
+  val index = new NodeIndex()
 
   override def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[Triple] = {
     import Node.matches
-    val tt = Set.empty ++ index( 1, sp ) ++ index( 2, pp ) ++ index( 3, op )
+    val tt = 
+      if ( !sp.isInstanceOf[Node] && !pp.isInstanceOf[Node] && !op.isInstanceOf[Node] ) triples
+      else Set.empty ++ index( 1, sp ) ++ index( 2, pp ) ++ index( 3, op )
     tt filter {
       case Triple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) 
       case _ => false
@@ -108,10 +104,21 @@ class SetGraph( tset: Set[Triple] ) extends Graph {
   }
 }
 
-class MutableSetGraph() extends Graph with Mutable {
+class SetGraph( tset: Set[Triple] ) extends IndexedGraph {
+  tset foreach { index store }
+  def triples = tset
+  def +( t: Triple ): SetGraph = new SetGraph( Set( t ) ++ tset )
+  def ++( ts: Iterable[Triple] ) = new SetGraph( tset ++ ts )
+  override def ++( g: Graph ): SetGraph = this ++ g.triples
+  override def contains( t: Triple ) = tset contains t
+}
+
+/**
+ * Triples can be added to this graph by mutating its triples set.
+ * Not thread-safe.
+ */
+class MutableSetGraph() extends IndexedGraph with Mutable {
   val mset = MSet[Triple]()
-  val index = new NodeIndex()
-  
   def triples = mset
   
   def +( t: Triple ): MutableSetGraph = {
@@ -122,7 +129,7 @@ class MutableSetGraph() extends Graph with Mutable {
   
   def ++( ts: Iterable[Triple] ): MutableSetGraph = {
     mset ++= ts
-    ts foreach { index store _ }
+    ts foreach { index store }
     this 
   }
   
