@@ -1,11 +1,11 @@
- package org.scardf
+package org.scardf
 
 import NodeConverter._
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 
 object Augment {
-  def triples( pf: PartialFunction[Triple, Iterable[Branch]] ) =
+  def triples( pf: PartialFunction[RdfTriple, Iterable[Branch]] ) =
     new PFAugmenter( pf )
   
   def fromBag( bagFn: Graph => NodeBag )( twigFn: PartialFunction[NodeFromGraph, Iterable[Twig]] ) =
@@ -27,7 +27,7 @@ class AugPreparator() {
 }
 
 trait Augmenter {
-  def augmentations( g: Graph ): Iterable[Triple]
+  def augmentations( g: Graph ): Iterable[RdfTriple]
   
   def augmented( g: Graph ): Graph = g ++ augmentations( g )
 }
@@ -39,7 +39,7 @@ class CompositeAugmenter( augs: Iterable[Augmenter] ) extends Augmenter {
 abstract class FindMakeAugmenter extends Augmenter {
   def findSubjects( g: Graph ): Set[GraphNode]
 
-  def makeTriple( n: GraphNode ): Triple
+  def makeTriple( n: GraphNode ): RdfTriple
   
   def augmentations( src: Graph ) = findSubjects( src ) map makeTriple
 }
@@ -48,20 +48,20 @@ abstract class PredAugmenter( pred: UriRef ) extends Augmenter {
   def augment( nfg: NodeFromGraph ): Pair[UriRef, Node]
   
   def augmentations( g: Graph ) = g.triples filter {
-    case Triple( _, `pred`, _ ) => true
+    case RdfTriple( _, `pred`, _ ) => true
     case _ => false
   } map { t => {
     val ( p, o ) = augment( t.obj(g) )
-    Triple( t.subj, p, o ) 
+    RdfTriple( t.subj, p, o ) 
   } }
 }
 
-class PFAugmenter( pf: PartialFunction[Triple, Iterable[Branch]] ) extends Augmenter {
-  val returnNone: PartialFunction[Triple, Iterable[Branch]] = { case _ => List() }
+class PFAugmenter( pf: PartialFunction[RdfTriple, Iterable[Branch]] ) extends Augmenter {
+  val returnNil: PartialFunction[RdfTriple, Iterable[Branch]] = { case _ => List() }
 
   def augmentations( g: Graph ) = {
-    val fn = pf orElse returnNone
-    val result = collection.mutable.Set[Triple]()
+    val fn = pf orElse returnNil
+    val result = collection.mutable.Set[RdfTriple]()
     for ( t <- g.triples; b <- fn( t ) ) result ++= b.triples
     result
 //TODO FIX shorter expr:   g.triples.flatMap{ x => ( pf orElse returnNone )( x ).triples }
@@ -70,17 +70,17 @@ class PFAugmenter( pf: PartialFunction[Triple, Iterable[Branch]] ) extends Augme
 
 class NodebagAugmenter( bagFn: Graph => NodeBag, twigFn: PartialFunction[NodeFromGraph, Iterable[Twig]] )
 extends Augmenter {
-  val returnNone: PartialFunction[NodeFromGraph, Iterable[Twig]] = { case _ => Nil }
+  val returnNil: PartialFunction[NodeFromGraph, Iterable[Twig]] = { case _ => Nil }
 
   def augmentations( g: Graph ) =
-    bagFn( g ).nodesFromGraph.flatMap{ x => ( twigFn orElse returnNone )( x ).triples }
+    bagFn( g ).nodesFromGraph.flatMap{ x => ( twigFn orElse returnNil )( x ).triples }
 }
 
 class SnBagAugmenter( bagFn: Graph => NodeBag, branchFns: List[GraphNode => Branch] ) 
 extends Augmenter {
-  def triples( gnode: GraphNode ): Set[Triple] = (
+  def triples( gnode: GraphNode ): Set[RdfTriple] = (
     branchFns map { fn: (GraphNode => Branch) => fn( gnode ).triples }
-  ).foldLeft( Set[Triple]() ){ _ ++ _ } 
+  ).foldLeft( Set[RdfTriple]() ){ _ ++ _ } 
 
   override def augmentations( g: Graph ) =
     bagFn( g ).nodesFromGraph.flatMap{ nfg => triples( nfg.asInstanceOf[GraphNode] ) }

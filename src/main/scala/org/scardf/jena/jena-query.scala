@@ -1,24 +1,9 @@
 package org.scardf.jena
 
-import scala.collection.mutable.ArrayBuffer
 import org.scardf._
+import scala.collection.mutable.ArrayBuffer
 import com.hp.hpl.jena.rdf.model.{Literal => JLiteral, _}
 import com.hp.hpl.jena.query._
-
-class JenaArq( m: Model ) extends QueryEngine {
-  def select( qStr: String ): List[Map[QVar, Node]] = {
-    val q = QueryFactory.create( qStr )
-    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
-    val rs = new QResultsIterator( e.execSelect, m )
-    rs.solutions
-  }
-  
-  def construct( qStr: String ): Graph = {
-    val q = QueryFactory.create( qStr )
-    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
-    new JenaGraph( e.execConstruct )
-  }
-}
 
 case class QSolution( jSolution: QuerySolution, m: Model ) {
   /**

@@ -10,10 +10,11 @@ object NodeBag {
   val empty = NodeBag( List(), Graph() )
 }
 
-case class NodeBag( nodes: List[Node], graph: Graph ) extends Iterable[Node] {
+case class NodeBag( nodes: List[Node], graph: Graph ) extends Traversable[Node] {
   
-  def elements = nodes.elements
   def contains( n: Node ) = nodes contains n
+  
+  override def foreach[U](f: Node => U): Unit = nodes foreach f
   
   lazy val nodesFromGraph: List[NodeFromGraph] = nodes map{ _(graph) }
 
@@ -35,13 +36,13 @@ case class NodeBag( nodes: List[Node], graph: Graph ) extends Iterable[Node] {
   
   def rend = nodes.map{ _.rend }.mkString( "bag{ ", ", ", " }" )
 
-  lazy val sorted = new NodeBag( nodes sort { (a, b) => a.rend < b.rend }, graph )
+  lazy val sorted = new NodeBag( nodes sortWith { _.rend < _.rend }, graph )
 
   /**
    * Equal if argument is a NodeBag with the same elements, regardless of order.
    */
   override def equals( o: Any ) = o match {
-    case that: NodeBag => (this.sorted sameElements that.sorted) && (this.graph == that.graph)
+    case that: NodeBag => (this.sorted.nodes sameElements that.sorted.nodes) && (this.graph == that.graph)
     case _ => false
   }
   

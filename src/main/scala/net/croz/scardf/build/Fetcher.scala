@@ -1,5 +1,7 @@
 package net.croz.scardf.build
 
+import net.croz.scardf._
+
 abstract class Fetcher {
 
   def fetch( in: Res ): Res = {

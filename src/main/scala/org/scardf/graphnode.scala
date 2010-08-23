@@ -25,7 +25,7 @@ case class GraphNode( node: SubjectNode, graph: Graph ) extends NodeFromGraph {
     case (_, null) => true
     case (p, None) => valuesOf( p ).isEmpty
     case (p, Some( o )) => has( p -> o )
-    case (p, o) => graph contains Triple( node, p, Node from o )
+    case (p, o) => graph contains RdfTriple( node, p, Node from o )
   }
 
   /**

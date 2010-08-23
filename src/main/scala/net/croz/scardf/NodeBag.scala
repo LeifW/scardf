@@ -10,7 +10,7 @@ object NodeBag {
 /**
  * An unordered collection of nodes.
  */
-class NodeBag( val list: List[Node] ) extends scala.Collection[Node] {
+class NodeBag( val list: List[Node] ) extends scala.Iterable[Node] {
   
   /**
    * Retrieves a node from this bag. It could be any one node contained in the bag.
@@ -70,9 +70,10 @@ class NodeBag( val list: List[Node] ) extends scala.Collection[Node] {
    * Simple string representation of the lexical values of all nodes in bag, separated with spaces.
    */
   def % = list.map( _.lexic ).mkString( "", " ", "" )
-  
-  def size = list.length
-  def elements = list.elements
+
+  override def iterator = list.iterator
+  override def size = list.length
+  override def elements = list.elements
   def contains( n: Node ) = list contains n
   
   lazy val sorted = new NodeBag( Node sort list )
@@ -81,7 +82,7 @@ class NodeBag( val list: List[Node] ) extends scala.Collection[Node] {
    * Equal if argument is a NodeBag with the same elements, regardless of order.
    */
   override def equals( o: Any ) = o match {
-    case that: NodeBag => this.sorted sameElements that.sorted
+    case that: NodeBag => this.sorted.list sameElements that.sorted.list
     case _ => false
   }
   

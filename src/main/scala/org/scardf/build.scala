@@ -1,7 +1,7 @@
 package org.scardf
 
 abstract class Twig {
-  def triples: Set[Triple]
+  def triples: Set[RdfTriple]
   def values: Set[Node]
 }
 
@@ -15,10 +15,10 @@ object Twig {
 }
 
 case class Branch( root: SubjectNode, assignments: Pair[ UriRef, Twig ]* ) extends Twig {
-  override def triples: Set[Triple] = {
-    val tsetseq: Seq[Set[Triple]] = for ( a <- assignments ) yield
-      a._2.values.map{ Triple( root, a._1, _ ) } ++ a._2.triples
-    if ( tsetseq.isEmpty ) Set[Triple]() else tsetseq reduceLeft{ _ ++ _ }
+  override def triples: Set[RdfTriple] = {
+    val tsetseq: Seq[Set[RdfTriple]] = for ( a <- assignments ) yield
+      a._2.values.map{ RdfTriple( root, a._1, _ ) } ++ a._2.triples
+    if ( tsetseq.isEmpty ) Set[RdfTriple]() else tsetseq reduceLeft{ _ ++ _ }
   }
   
   override def values = Set( root )
@@ -34,7 +34,7 @@ case class Branch( root: SubjectNode, assignments: Pair[ UriRef, Twig ]* ) exten
 
 object Branch {
   
-  implicit def toBranch( t: Triple ) = Branch( t.subj, t.pred -> ObjSet( t.obj ) )
+  implicit def toBranch( t: RdfTriple ) = Branch( t.subj, t.pred -> ObjSet( t.obj ) )
   
   def of( root: SubjectNode, assignments: Seq[ Pair[ UriRef, Twig ] ] ) =
     Branch( root, assignments: _* )
@@ -54,18 +54,18 @@ class ObjSet( objs: Set[Node] ) extends Twig {
 }
 
 object ObjSet {
-  val empty = Set[Triple]()
+  val empty = Set[RdfTriple]()
   def apply( nodes: Node* ) = new ObjSet( Set( nodes: _* ) )
 }
 
 case class ListBranch( l: List[_] ) extends Twig {
   private val b = Blank()
-  override val triples: Set[Triple] = l match {
+  override val triples: Set[RdfTriple] = l match {
     case Nil => Set()
-    case List( one ) => Set( Triple( b, RDF.first, Node from one ), Triple( b, RDF.rest, RDF.nil ) )
+    case List( one ) => Set( RdfTriple( b, RDF.first, Node from one ), RdfTriple( b, RDF.rest, RDF.nil ) )
     case first :: rest => 
       val sublist = ListBranch( rest )
-      sublist.triples + Triple( b, RDF.first, Node from first ) + Triple( b, RDF.rest, sublist.b )
+      sublist.triples + RdfTriple( b, RDF.first, Node from first ) + RdfTriple( b, RDF.rest, sublist.b )
   }
   override def values = Set( b )
 }

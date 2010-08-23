@@ -8,7 +8,7 @@ import NodeConverter._
  * Use method {#v} to create an appropriate {NodeToValueConverter}
  * (as UriRefs are {NodeToBagConverter}s).
  */
-case class Property[T]( override val uri: String )( implicit val nc: NodeToValueConverter[T] )
+class Property[T]( override val uri: String )( implicit val nc: NodeToValueConverter[T] )
 extends UriRef( uri ) {
   /**
    * Applies this predicate and node-to-value converter.
@@ -35,17 +35,25 @@ extends UriRef( uri ) {
   val exist: NodeBagConverter[Boolean] = NodeBagConverter[Boolean]( nb => !(nb/this).isEmpty )
 }
 
+object Property {
+  def apply[T]( uri: String )( implicit nc: NodeToValueConverter[T] ) = new Property( uri )( nc )
+}
+
 /**
  * Properties with range of subject nodes.
  * {#v} actually converts to {GraphNode}.
  * Use {#n} to convert to {SubjectNode}
  */
-case class GNProperty( override val uri: String ) extends Property[GraphNode]( uri ) {
+class GNProperty( override val uri: String ) extends Property[GraphNode]( uri ) {
   /**
    * New node-to-SubjectNode converter using {#valueOf} method.
-   * Use instead of "v(x).node"
+   * Use in place of "v(x).node"
    */
   val n: NodeToValueConverter[SubjectNode] = new GraphNodeConverter[SubjectNode]{
     def convertGraphNode( gn: GraphNode ) = valueOf( gn ).node
   }
+}
+
+object GNProperty {
+  def apply( uri: String ) = new GNProperty( uri )
 }

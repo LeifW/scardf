@@ -1,6 +1,6 @@
 package org.scardf
 
-case class Vocabulary( prefix: String ) {
+class Vocabulary( val prefix: String ) {
   def \( suffix: String ) = UriRef( prefix + suffix )
   def ÷( suffix: String ) = UriRef( prefix + suffix )
   def ÷( suffixSymbol: Symbol ): UriRef = ÷( suffixSymbol.name )

@@ -4,28 +4,54 @@ import collection.mutable.{Set => MSet, Map => MMap}
 
 trait Mutable
 
+/**
+ * Factory for a SetGraph.
+ *
+ */
 object Graph {
-  def apply() = new SetGraph( Set.empty[Triple] )
-  def apply( triples: Set[Triple] ): SetGraph = new SetGraph( triples )
+  def apply() = new SetGraph( Set.empty[RdfTriple] )
+  def apply( triples: Set[RdfTriple] ): SetGraph = new SetGraph( triples )
+  
+  /**
+   * Builds a SetGraph from a sequence of branches.
+   * @param branches
+   * @return constructed graph
+   */
   def build( branches: Branch* ): SetGraph = branches.map{ _.toGraph }.foldLeft( Graph() ){ _++_ }
 
   /**
-   * NOT IMPLEMENTED!
+   * Some mapping between blank nodes in two graphs if these graphs are isomorphic,
+   * None otherwise.
+   * NOT IMPLEMENTED YET!
    */
-  def mapping( g1: Set[Triple], g2: Set[Triple] ): Option[Map[Blank, Blank]] = {
+  def mapping( g1: Set[RdfTriple], g2: Set[RdfTriple] ): Option[Map[Blank, Blank]] = {
     val s1 = MSet() ++ g1
     val s2 = MSet() ++ g2
-    
     Some(Map())
   }
 }
 
+/**
+ * An RDF graph. Essentially a set of triples.
+ * 
+ */
 trait Graph {
-  def triples: Collection[Triple]
+  def triples: Iterable[RdfTriple]
   def size = triples.size
   
-  def +( t: Triple ): Graph
-  def ++( ts: Iterable[Triple] ): Graph
+  /**
+   * 
+   * @param triple triple to add
+   * @return new graph containing all triples in this and also the given triple
+   */
+  def +( triple: RdfTriple ): Graph
+  
+  /**
+   * 
+   * @param triples a traversable collection of RDF triples to add
+   * @return new graph containing a union of this and given triples
+   */
+  def ++( triples: Traversable[RdfTriple] ): Graph
   
   def ++( g: Graph ): Graph = this ++ g.triples
   
@@ -47,7 +73,7 @@ trait Graph {
     Graph.mapping( thisBt, thatBt ).isDefined
   }
   
-  def contains( t: Triple ): Boolean
+  def contains( t: RdfTriple ): Boolean
   
   def /( n: SubjectNode ) = GraphNode( n, this )
   def bagOf( vals: Any* ) = new NodeBag( vals map { Node from _ } toList, this )
@@ -64,53 +90,61 @@ trait Graph {
   def nodes = subjects ++ objects
   def blankNodes: Iterable[Blank] = nodes filter { _.isBlank } map { _.asInstanceOf[Blank] }
   
-  def triplesMatching( pf: PartialFunction[Triple, Boolean] ): Iterable[Triple] = 
+  def triplesMatching( pf: PartialFunction[RdfTriple, Boolean] ): Iterable[RdfTriple] = 
     triples filter{ pf orElse {case _ => false} }
 
-  def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[Triple] = {
-    import Node.matches
-    triplesMatching { case Triple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) }
-  }
-  
   /**
-   * Optional query engine available for querying this graph.
+   * Matches triples by places, using pattern objects for {@link Node#matches}.
+   * Note: This method is the preferred way of filtering triples in graph because it's declarative.
+   * Implementations can use this information to optimize the filtering process, 
+   * e.g. by using indices or modifying query strings.
+   * @param sp pattern for the subject part
+   * @param pp pattern for the predicate
+   * @param op pattern for the object
+   * @return an iterable with all triples in graph matching the parameters.
+   * @see {Node#matches}
    */
-  def queryEngineOpt: Option[QueryEngine] = None
-  
-  def renderIn( sf: SerializationFormat ): Serializator = sf match {
-    case NTriple => new Serializator() {
-      override def writeTo( w: java.io.Writer ) = w write asString
-      override def asString = triples.map{ _.rend }.mkString( "\n" )
+  def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[RdfTriple] = {
+    import Node.matches
+    triplesMatching { 
+      case RdfTriple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) 
     }
-    case _ => throw new UnsupportedOperationException()
   }
-  def rend: String = renderIn( NTriple ).asString
   
-  override def toString = "Graph[ " + size + " triples ]"
+  def rend: String = new Serializator( NTriple ).asString( this )
 }
 
+/**
+ * Adds triples index to the in-memory graph.
+ * Implements triplesLike to 
+ */
 trait IndexedGraph extends Graph {
   val index = new NodeIndex()
 
-  override def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[Triple] = {
+  override def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[RdfTriple] = {
     import Node.matches
     val tt = 
       if ( !sp.isInstanceOf[Node] && !pp.isInstanceOf[Node] && !op.isInstanceOf[Node] ) triples
       else Set.empty ++ index( 1, sp ) ++ index( 2, pp ) ++ index( 3, op )
     tt filter {
-      case Triple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) 
+      case RdfTriple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) 
       case _ => false
     }
   }
 }
 
-class SetGraph( tset: Set[Triple] ) extends IndexedGraph {
+/**
+ * Immutable RDF graph stored in memory.
+ */
+class SetGraph( tset: Set[RdfTriple] ) extends IndexedGraph {
   tset foreach { index store }
   def triples = tset
-  def +( t: Triple ): SetGraph = new SetGraph( Set( t ) ++ tset )
-  def ++( ts: Iterable[Triple] ) = new SetGraph( tset ++ ts )
+  def +( t: RdfTriple ): SetGraph = new SetGraph( Set( t ) ++ tset )
+  def ++( ts: Traversable[RdfTriple] ) = new SetGraph( tset ++ ts )
   override def ++( g: Graph ): SetGraph = this ++ g.triples
-  override def contains( t: Triple ) = tset contains t
+  override def contains( t: RdfTriple ) = tset contains t
+  
+  override def toString = "SetGraph[ " + size + " triples ]"
 }
 
 /**
@@ -118,55 +152,63 @@ class SetGraph( tset: Set[Triple] ) extends IndexedGraph {
  * Not thread-safe.
  */
 class MutableSetGraph() extends IndexedGraph with Mutable {
-  val mset = MSet[Triple]()
-  def triples = mset
+  val mset = MSet[RdfTriple]()
+  def triples = mset //TODO make read-only view
   
-  def +( t: Triple ): MutableSetGraph = {
+  def +( t: RdfTriple ): MutableSetGraph = {
     mset += t
     index store t
     this 
   }
   
-  def ++( ts: Iterable[Triple] ): MutableSetGraph = {
+  def ++( ts: Traversable[RdfTriple] ): MutableSetGraph = {
     mset ++= ts
     ts foreach { index store }
     this 
   }
   
   override def ++( g: Graph ): MutableSetGraph = this ++ g.triples
-  override def contains( t: Triple ) = mset contains t
+  override def contains( t: RdfTriple ) = mset contains t
+  
+  override def toString = "MutableSetGraph[ " + size + " triples ]"
 }
 
 class NodeIndex {
-  type IndexMap = MMap[Node, MSet[Triple]]
-  def newIndexMap = MMap[Node, MSet[Triple]]()
-  val map = Map(1 -> newIndexMap, 2 -> newIndexMap, 3 -> newIndexMap ) 
+  type IndexMap = MMap[Node, MSet[RdfTriple]]
+  def newIndexMap = MMap[Node, MSet[RdfTriple]]()
+  val map = Map( 1 -> newIndexMap, 2 -> newIndexMap, 3 -> newIndexMap ) 
   
-  def this( it: Iterable[Triple] ) = {
+  def this( it: Iterable[RdfTriple] ) = {
     this()
     it foreach { store }
   }
-    
-  def apply( pos: Int, p: Any ): Iterable[Triple] = p match {
+  
+  def apply( pos: Int, p: Any ): Iterable[RdfTriple] = p match {
     case n: Node => triples( pos, n )
     case _ => Nil
   }
   
-  def store( t: Triple ) = {
+  def store( t: RdfTriple ) = {
     update( 1, t.subj, t )
     update( 2, t.pred, t )
     update( 3, t.obj, t )
   }
   
-  private[this] def update( pos: Int, n: Node, t: Triple ) = 
-    map( pos ).getOrElseUpdate( n, MSet[Triple]() ) + t
+  private[this] def update( pos: Int, n: Node, t: RdfTriple ) = 
+    map( pos ).getOrElseUpdate( n, MSet[RdfTriple]() ) += t
   
-  def triples( pos: Int, n: Node ) = map( pos ).getOrElse( n, MSet[Triple]() )
+  def triples( pos: Int, n: Node ) = map( pos ).getOrElse( n, MSet[RdfTriple]() )
 }
 
-abstract class Serializator {
-  var bindings: Map[String, String] = Map()
-  
+/**
+ * Writes graph to a Writer and reads from a Reader based on a given format.
+ * This class only writes in NTriple format. 
+ * All other options throw an UnsupportedOperationException.
+ * Prefixes may be registered with the {#prefixes} method.
+ */
+class Serializator( sf: SerializationFormat ) {
+  var bindings = Map[String, String]()
+
   def prefixes( pairs: Pair[Symbol, Vocabulary]* ): Serializator = { 
     bindings = Map(
       ( pairs map { p => p._1.name -> p._2.prefix } ): _* 
@@ -174,11 +216,14 @@ abstract class Serializator {
     this
   }
   
-  def writeTo( w: java.io.Writer ): Unit = throw new UnsupportedOperationException()
-  
-  def asString: String = {
+  def write( g: Graph, w: java.io.Writer ): Unit = sf match {
+    case NTriple => w write g.triples.map{ _.rend }.mkString( "\n" )
+    case _ => throw new UnsupportedOperationException()
+  }
+
+  def asString( g: Graph ): String = {
     val sw = new java.io.StringWriter
-    writeTo( sw )
+    write( g, sw )
     sw.toString
   }
   

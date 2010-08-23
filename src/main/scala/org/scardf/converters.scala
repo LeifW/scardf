@@ -129,7 +129,7 @@ object NodeConverter {
    * Bag converter filters out all duplicate nodes in bag.
    */
   val distinct =
-    NodeBagConverter[NodeBag]( b => NodeBag( b.nodes.removeDuplicates, b.graph ) )
+    NodeBagConverter[NodeBag]( b => NodeBag( b.nodes.distinct, b.graph ) )
   
   /**
    * Constructs a node-to-value converter which yields string value for plain literals
@@ -145,7 +145,7 @@ object NodeConverter {
    * Converter throws RdfTraversalException if given node is not a literal.
    */
   val asLexic = new SimpleNodeConverter[String]( {
-    case Literal( lf ) => lf
+    case l: Literal => l.lexicalForm
     case x => throw new RdfTraversalException( "Not a literal: " + x )
   } )
 

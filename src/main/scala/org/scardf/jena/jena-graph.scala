@@ -1,16 +1,18 @@
 package org.scardf.jena
 
+import org.scardf._
 import scala.collection.mutable.ArrayBuffer
-import com.hp.hpl.jena.rdf.model.{Literal => JLiteral, _}
+import com.hp.hpl.jena.rdf.model.{Literal => JLiteral, Property => JProperty, _}
 import com.hp.hpl.jena.datatypes.TypeMapper
+import com.hp.hpl.jena.query._
 
-class JenaGraph( private val m: Model ) extends Graph {
+class JenaGraph( private[jena] val m: Model ) extends Graph with QueryEngine {
   
   def this() = this( ModelFactory.createDefaultModel )
 
   def triples = new JenaTripleIterator( m.listStatements ).toList
 
-  override def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[Triple] = {
+  override def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[RdfTriple] = {
     import Node.matches
     val tt = new JenaTripleIterator( m.listStatements( 
       sp match {
@@ -27,14 +29,14 @@ class JenaGraph( private val m: Model ) extends Graph {
       } 
     ) )
     tt.filter{
-      case Triple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) 
+      case RdfTriple( s, p, o ) => matches( sp, s ) && matches( pp, p ) && matches( op, o ) 
       case _ => false
     }.toList
   }
 
-  def contains( t: Triple ) = m contains statement( t )
+  def contains( t: RdfTriple ) = m contains statement( t )
 
-  override def +( t: Triple ) = {
+  override def +( t: RdfTriple ) = {
     m add statement( t )
     this
   }
@@ -46,9 +48,7 @@ class JenaGraph( private val m: Model ) extends Graph {
   
   override def subjects: Set[SubjectNode] = Set() ++ new JenaResIterator( m.listSubjects )
 
-  override def queryEngineOpt = Some( new JenaArq( m ) )
-  
-  def statement( t: Triple ): Statement = 
+  def statement( t: RdfTriple ): Statement = 
     m.createStatement( resource( t.subj ), property( t.pred ), rdfnode( t.obj ) )
   
   def resource( sn: SubjectNode ) = sn match {
@@ -66,17 +66,35 @@ class JenaGraph( private val m: Model ) extends Graph {
       ResourceFactory.createTypedLiteral( lf, TypeMapper.getInstance.getSafeTypeByName( dtUri ) )
   }
 
-  override def ++( ts: Iterable[Triple] ) = { ts foreach { this+_ }; this }
+  override def ++( ts: Traversable[RdfTriple] ) = { ts foreach { this+_ }; this }
+    def select( qStr: String ): List[Map[QVar, Node]] = {
+    val q = QueryFactory.create( qStr )
+    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
+    val rs = new QResultsIterator( e.execSelect, m )
+    rs.solutions
+  }
   
-  override def renderIn( sf: SerializationFormat ): Serializator = new Serializator() {
-    override def writeTo( w: java.io.Writer ) = {
-      bindings foreach { p => m.setNsPrefix( p._1, p._2 ) }
-      m.write( w, Jena codeFor sf )
+  def construct( qStr: String ): Graph = {
+    val q = QueryFactory.create( qStr )
+    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
+    new JenaGraph( e.execConstruct )
+  }
+}
+
+class JenaSerializator( val sf: SerializationFormat) extends Serializator( sf ) {
+  override def write( g: Graph, w: java.io.Writer ) = {
+    val m = g match {
+      case jg: JenaGraph => jg.m
+      case _ => (new JenaGraph ++ g).asInstanceOf[JenaGraph].m
     }
-    override def readFrom( r: java.io.Reader ) = {
-      m.read( r, null, Jena codeFor sf )
-      JenaGraph.this
-    }
+    bindings foreach { p => m.setNsPrefix( p._1, p._2 ) }
+    m.write( w, Jena codeFor sf )
+  }
+  
+  override def readFrom( r: java.io.Reader ) = {
+    val jg = new JenaGraph
+    jg.m.read( r, null, Jena codeFor sf )
+    jg
   }
 }
 
@@ -85,7 +103,7 @@ class JenaResIterator( jIterator: ResIterator ) extends Iterator[SubjectNode] {
   override def next = Jena.subjectNode( jIterator.next.asInstanceOf[Resource] )
 }
 
-class JenaTripleIterator( jIterator: StmtIterator ) extends Iterator[Triple] {
+class JenaTripleIterator( jIterator: StmtIterator ) extends Iterator[RdfTriple] {
   override def hasNext = jIterator.hasNext
   override def next = Jena.triple( jIterator.next.asInstanceOf[Statement] )
 }
@@ -97,10 +115,10 @@ object Jena {
   def uriRef( r: Resource ) = UriRef( r.getURI )
   
   def node( n: RDFNode ): Node = n match {
-    case null        => null
-    case p: Property => uriRef( p )
-    case r: Resource => subjectNode( r )
-    case l: JLiteral => literal( l )
+    case null         => null
+    case p: JProperty => uriRef( p )
+    case r: Resource  => subjectNode( r )
+    case l: JLiteral  => literal( l )
   }
   
   def literal( l: JLiteral ) = {
@@ -110,7 +128,7 @@ object Jena {
     else TypedLiteral( lexForm, UriRef( typeUri ) )
   }
   
-  def triple( s: Statement ) = Triple( 
+  def triple( s: Statement ) = RdfTriple( 
     subjectNode( s.getSubject ), 
     uriRef( s.getPredicate ), 
     node( s.getObject ) 

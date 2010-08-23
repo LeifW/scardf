@@ -2,7 +2,7 @@ package org.scardf
 
 import NodeConverter._
 
-trait RdfList[E] extends Iterable[E] {
+trait RdfList[E] extends Traversable[E] {
   def first: E
   def rest: RdfList[_<:E]
   def node: SubjectNode
@@ -10,13 +10,10 @@ trait RdfList[E] extends Iterable[E] {
 
 final object RdfNil extends RdfList[Nothing] {
   override def isEmpty = true
-  def first: Nothing = throw new NoSuchElementException("first of empty list")
-  def rest: Nothing = throw new NoSuchElementException("rest of empty list")
+  override def first: Nothing = throw new NoSuchElementException("first of empty list")
+  override def rest: Nothing = throw new NoSuchElementException("rest of empty list")
   def node = RDF.nil
-  def elements = new Iterator[Nothing]() {
-    def hasNext = false
-    def next = throw new NoSuchElementException("next on empty list")
-  }
+  override def foreach[U](f: Nothing => U): Unit = throw new NoSuchElementException("foreach on empty list")
 }
 
 case class GraphList[E]( gn: GraphNode, nc: NodeToValueConverter[E] ) extends RdfList[E] {
@@ -27,14 +24,12 @@ case class GraphList[E]( gn: GraphNode, nc: NodeToValueConverter[E] ) extends Rd
   def rest = if ( gn.node == RDF.nil ) RdfNil else GraphList( gn/RDF.rest/asGraphNode, nc )
   
   def node = gn.node
-  
-  def elements = new Iterator[E]() {
+
+  override def foreach[U](f: E => U): Unit = {
     var currentGNode = gn
-    def hasNext = currentGNode/RDF.first/#?
-    def next = {
+    while ( currentGNode/RDF.first/#? ) {
       val e = currentGNode/RDF.first/nc
       currentGNode = currentGNode/RDF.rest/asGraphNode
-      e
     }
   }
 }

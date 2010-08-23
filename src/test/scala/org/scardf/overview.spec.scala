@@ -11,13 +11,11 @@ object PrimerSpecs extends Specification {
   "NodeBag" should {
     import PeopleVoc._
     import Doe._
-    "" in {
-      val g = Graph.build( john -(
-        PeopleVoc.name -> Branch( given -> "John", family -> "Doe" ),
-        spouse -> ( jane -spouse -> john )
-      ) )
-      g
-    }
+    val g = Graph.build( john -(
+      PeopleVoc.name -> Branch( given -> "John", family -> "Doe" ),
+      spouse -> ( jane -spouse -> john )
+    ) )
+
     "throw exception on taking one node from empty bag" in {
       Graph().bagOf().singleNode must throwA[ Exception ]
     }
@@ -28,12 +26,9 @@ object PrimerSpecs extends Specification {
       g.bagOf( "b", "a" ) must_== g.bagOf( "a", "b" )
       g.bagOf( "b", "a" ) must_!= g.bagOf( "b", "a", "b" )
     }
+
     "flow" in {
-      println( 
-        new jena.JenaGraph() ++ Doe.graph 
-        renderIn Turtle prefixes( 'p -> PeopleVoc, 'd -> Doe, 'rdf -> RDF, 'xsd -> XSD ) asString
-      )
-      val g = Doe.graph
+      val g = Doe.graph.asInstanceOf[SetGraph]
       g/john/PeopleVoc.name/given/asString must_== "John"
       g/john/PeopleVoc.name/given.v must_== "John"
       g/john/isMale/asBoolean must_== true
@@ -69,19 +64,19 @@ object PrimerSpecs extends Specification {
       val g = Doe.graph
       "pattern matching" in {
         g.triples filter { _ match {
-          case Triple( `anna`, `height`, _ ) => true
+          case RdfTriple( `anna`, `height`, _ ) => true
           case _ => false
         } }
         g.triplesMatching {
-          case Triple( `anna`, `height`, _ ) => true
-        }.toList must_== List( Triple( anna, height, Node from 107 ) )
+          case RdfTriple( `anna`, `height`, _ ) => true
+        }.toList must_== List( RdfTriple( anna, height, Node from 107 ) )
         g.triplesMatching {
-          case Triple( _, `height`, h: Literal ) => asInt(h) < 100
+          case RdfTriple( _, `height`, h: Literal ) => asInt(h) < 100
         }.map{ _.subj }.toList must_== List( bob )
       }
       "triplesLike with Node placeholder" in {
         g.triplesLike( anna, height, Node ).toList.size must_== 1
-        g.triplesLike( anna, height, Node ).toList must_== List( Triple( anna, height, Node from 107 ) )
+        g.triplesLike( anna, height, Node ).toList must_== List( RdfTriple( anna, height, Node from 107 ) )
       }
       "triplesLike with a closure" in {
         g.triplesLike( Node, height, { h: Literal => asInt(h) < 100 } ).map{ _.subj }.toList must_== List( bob )

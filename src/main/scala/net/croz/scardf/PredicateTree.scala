@@ -40,7 +40,7 @@ case class PredicateTree( branches: Map[Prop, PredicateTree] ) extends Predicate
   
   def ++( other: PredicateTree ): PredicateTree = new PredicateTree( {
     val mergedMap = scala.collection.mutable.Map[Prop, PredicateTree]()
-    mergedMap ++ branches
+    mergedMap ++= branches
     for ( (predicate, subtree) <- other.branches )
       (branches get predicate) match {
         case Some( existingTree ) => mergedMap( predicate ) = existingTree ++ subtree
@@ -51,7 +51,7 @@ case class PredicateTree( branches: Map[Prop, PredicateTree] ) extends Predicate
   
   def --( other: PredicateTree ): PredicateTree = new PredicateTree( {
     val remainMap = scala.collection.mutable.Map[Prop, PredicateTree]()
-    remainMap ++ branches
+    remainMap ++= branches
     for ( (predicate, subtree) <- other.branches )
       (branches get predicate) match {
         case Some( PredicateTree.empty ) => remainMap removeKey predicate

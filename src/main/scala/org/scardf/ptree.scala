@@ -33,7 +33,7 @@ extends PredicateConstruct {
 
   private[this] def merge( m1: Map[UriRef, PredicateTree], m2: Map[UriRef, PredicateTree] ) = {
     val mergedMap = scala.collection.mutable.Map[UriRef, PredicateTree]()
-    mergedMap ++ m1
+    mergedMap ++= m1
     for ( (predicate, subtree) <- m2 )
       (m1 get predicate) match {
         case Some( existingTree ) => mergedMap( predicate ) = existingTree ++ subtree
@@ -72,7 +72,7 @@ extends PredicateConstruct {
 	      case sn: GraphNode => g ++= sn.graph //TODO use mutable outgraph and skip this?
 	      case _ =>
 	    }
-	    g += Triple( root.node, predicate, Node from a )
+	    g += RdfTriple( root.node, predicate, Node from a )
       }
     }
     g/root.node
@@ -93,9 +93,9 @@ extends PredicateConstruct {
     while ( l.node != RDF.nil ) {
       val head = l/RDF.first/asGraphNode
       val tail = l/RDF.rest/asGraphNode
-      g += Triple( l.node, RDF.first, head.node )
+      g += RdfTriple( l.node, RDF.first, head.node )
       grow( head, g )
-      g += Triple( l.node, RDF.rest, tail.node )
+      g += RdfTriple( l.node, RDF.rest, tail.node )
       l = tail
     }
     g/rootl.node

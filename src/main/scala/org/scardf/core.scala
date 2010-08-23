@@ -22,7 +22,7 @@ trait NodeFromGraph {
 /**
  * RDF node, either a URI reference, a blank node, or a literal.
  */
-sealed abstract case class Node() extends TermPlace {
+sealed abstract class Node() extends TermPlace {
   def apply( g: Graph ): NodeFromGraph
   def isBlank = isInstanceOf[Blank]
   def isLiteral = isInstanceOf[Literal]
@@ -57,23 +57,33 @@ object Node {
    * Checks if given node matches given template (any object).
    * <li>every node matches object Node</li>
    * <li>every literal node matches object Literal</li>
+   * <li>every plain literal matches object PlainLiteral</li>
+   * <li>every typed literal matches object TypedLiteral</li>
    * <li>every subject node matches object SubjectNode</li>
    * <li>every blank node matches object Blank</li>
+   * <li>every URI reference matches object UriRef</li>
    * <li>if template is a node, parameters are checked for equality</li>
    * <li>if template is a graph node, its node is checked for equality</li>
    * <li>if template is function of Node to Boolean, this function is applied to tested node;
    * any exception thrown from this function is absorbed and <code>false</code> is returned</li>
-   * <li>in all other cases, a node is constructed from the template object, and this is compared to the tested node</li>
+   * <li>if template is {@link None}, false is returned</li>
+   * <li>if template is {@link Some}, this method is reapplied with the content being the template parameter</li>
+   * <li>in all other cases, a node is constructed from the template object using {@link Node#from},
+   * and this is compared to the tested node</li>
    */
   def matches( template: Any, n: Node ): Boolean = template match {
     case Node => true
     case Literal => n.isLiteral
+    case PlainLiteral => n.isInstanceOf[PlainLiteral]
+    case TypedLiteral => n.isInstanceOf[TypedLiteral]
     case SubjectNode => !n.isLiteral
-    case UriRef => !n.isBlank && !n.isLiteral
+    case UriRef => n.isInstanceOf[UriRef]
     case Blank => n.isBlank
     case m: Node => m == n
     case gn: GraphNode => gn.node == n
     case fn: Function[Node, Boolean] => try { fn( n ) } catch { case e: Exception => false }
+    case None => false
+    case Some(x) => matches( x, n )
     case v => (Node from v) == n
   }
 }
@@ -82,18 +92,20 @@ object Node {
  * RDF node that can be used as a subject of a triple.
  * Either a URI reference, or a blank node.
  */
-sealed abstract case class SubjectNode() extends Node {
+sealed abstract class SubjectNode() extends Node {
   def -( pred: UriRef ) = SubPredPair( this, pred )
   
   def -( poPairs: Pair[ UriRef, Any ]* ) = Branch.make( this, poPairs: _* )
   
   override def apply( g: Graph ) = g/this
 }
+object SubjectNode
 
 /**
  * URI reference, a kind of a subject node.
+ * Two URI references are equal if their URI strings are equal (char-per-char).
  */
-case class UriRef( uri: String ) extends SubjectNode with NodeToBagConverter {
+class UriRef( val uri: String ) extends SubjectNode with NodeToBagConverter {
   override def apply( nfg: NodeFromGraph ) = nfg match {
     case gn: GraphNode => gn/this
     case _ => throw new RdfTraversalException( "Cannot traverse a predicate from " + nfg )
@@ -107,17 +119,22 @@ case class UriRef( uri: String ) extends SubjectNode with NodeToBagConverter {
   
   override def rend = "<" + uri + ">"
 
-  def canEqual(other: Any): Boolean = other.isInstanceOf[UriRef]
+  final def canEqual(other: Any): Boolean = other.isInstanceOf[UriRef]
 
-  override def equals(other: Any): Boolean =
+  final override def equals(other: Any): Boolean =
     other match {
       case that: UriRef => (that canEqual this) && this.uri == that.uri
       case _ => false
     }
  
-  override def hashCode = uri.hashCode
+  final override def hashCode = uri.hashCode
   
   override val toString = rend
+}
+
+object UriRef {
+  def apply( uri: String ) = new UriRef( uri )
+  def unapply( ur: UriRef ): Option[String] = Some( ur.uri )
 }
 
 /**
@@ -138,7 +155,7 @@ object Blank {
 /**
  * A literal.
  */
-sealed abstract case class Literal( val lexicalForm: String ) extends Node with NodeFromGraph {
+sealed abstract class Literal( val lexicalForm: String ) extends Node with NodeFromGraph {
   override final def node = this
   
   def apply( g: Graph ) = this

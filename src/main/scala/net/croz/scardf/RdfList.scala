@@ -2,7 +2,6 @@ package net.croz.scardf
 
 import com.hp.hpl.jena.rdf.model.RDFNode
 import com.hp.hpl.jena.rdf.model.RDFList
-import scala.collection.jcl.Conversions.convertList
 
 class RdfList( val jRdfList: RDFList, override val model: Model ) extends Res( jRdfList, model )
 with scala.Seq[Node] with util.Logging
@@ -10,10 +9,10 @@ with scala.Seq[Node] with util.Logging
   def toNodeBag: NodeBag = new NodeBag( elements.toList )
 
   def jlist: List[RDFNode] = 
-    convertList( jRdfList.asJavaList.asInstanceOf[java.util.List[RDFNode]] ).toList
+    scala.collection.JavaConversions.JListWrapper( jRdfList.asJavaList.asInstanceOf[java.util.List[RDFNode]] ).toList
 
   def length = jRdfList.size
-  def elements: Iterator[Node] = jlist.map{ n: RDFNode => Node( n ) }.elements
+  override def iterator: Iterator[Node] = jlist.map{ n: RDFNode => Node( n ) }.elements
   def apply( i: Int ) = Node( jRdfList.get(i) )
 }
 

@@ -50,11 +50,11 @@ object Doe extends Vocabulary( "http://doe.eg#" ) {
   
   // triples specifying last name "Doe" for every person in the basegraph are constructed
   val graph0 = basegraph ++ 
-    ( basegraph/-/name/asSubjectNode.iterable map { sn => Triple( sn, family, Literal( "Doe" ) ) } )
+    ( basegraph/-/name/asSubjectNode.iterable map { sn => RdfTriple( sn, family, Literal( "Doe" ) ) } )
 
 //  val metersHigh = ÷( "metersHigh" )
 //  val graph = Augment triples {
-//    case Triple( s, `height`, TypedLiteral( hInCm, _ ) ) => List( s -metersHigh-> ( hInCm.toInt/100 ) )
+//    case RdfTriple( s, `height`, TypedLiteral( hInCm, _ ) ) => List( s -metersHigh-> ( hInCm.toInt/100 ) )
 //  } augmented basegraph
   
   val graph = Augment add { _ -family-> "Doe" } forEach { _/-/name } on basegraph

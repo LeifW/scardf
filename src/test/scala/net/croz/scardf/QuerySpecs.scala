@@ -86,6 +86,7 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
       Sparql ask( (X, IsMale, false), (X, Likes, Science) ) in data must_== false
     }
     "construct graphs from template" in {
+      import net.croz.scardf.query._
       val template = Blank( Likes -> Blank(), Spouse -> Blank( Likes -> Blank() ) ).toModel
       val constructedGraph = Sparql construct template from data
       val expectedGraph = new Model

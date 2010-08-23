@@ -28,7 +28,7 @@ case class PropPath( propList: List[Prop] ) extends Seq[Prop] with PredicateChai
     res/subpath( 0, propList.size-1 )/asRes state propList.last -> value
   
   val length = propList.length
-  val elements = propList.elements
+  val iterator = propList.elements
   def apply( index: Int ) = propList( index )
   
   override def toString = propList.mkString( "PChain( ", ", ", ")" )

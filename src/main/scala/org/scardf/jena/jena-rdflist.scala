@@ -1,5 +1,6 @@
 package org.scardf.jena
 
+import org.scardf._
 import com.hp.hpl.jena.rdf.model._
 import com.hp.hpl.jena.util.iterator.ExtendedIterator
 
@@ -10,7 +11,8 @@ case class JenaRdfList( jlist: RDFList ) extends RdfList[Node] {
   
   def node = Jena.subjectNode( jlist )
   
-  def elements = new JenaExtendedIterator( jlist.iterator )
+  override def foreach[U]( f: Node => U ): Unit =
+    new JenaExtendedIterator( jlist.iterator ).foreach( f )
 }
 
 class JenaExtendedIterator( ei: ExtendedIterator[RDFNode] ) extends Iterator[Node] {

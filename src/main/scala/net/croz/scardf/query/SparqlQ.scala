@@ -1,5 +1,6 @@
 package net.croz.scardf.query
 
+import net.croz.scardf._
 import com.hp.hpl.jena.rdf.model.Resource
 import com.hp.hpl.jena.query.{
   Query, QueryExecution, QueryExecutionFactory, QueryFactory, QueryParseException, QuerySolutionMap
@@ -197,7 +198,7 @@ class AskQ( triplets: (Any, Any, Any)* ) extends SparqlQ[AskQ] {
 class ExtractQ( props: Prop* ) extends SparqlQ[ExtractQ] {
   def from( focus: Res ) = {
     val triplets = new scala.collection.mutable.ListBuffer[(Any, Any, Any)]()
-    for ( p <- props ) triplets += (focus, p, QVar())
+    for ( p <- props ) triplets += Triple(focus, p, QVar())
     new ConstructQ( triplets: _* ) where( triplets: _* ) from focus.model
   }
 }

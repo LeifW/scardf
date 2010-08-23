@@ -163,7 +163,7 @@ class Subgraph {
   val root = Blank.model.getAnon
   var slist = new scala.collection.mutable.ListBuffer[Stmt]()
   def +=( p: Prop, n: Node ) = slist += Stmt( root, p, n )
-  def +=( p: Prop, sg: Subgraph ) = slist ++ ( Stmt( root, p, sg.root ) :: sg.slist.toList )
+  def +=( p: Prop, sg: Subgraph ) = slist ++= ( Stmt( root, p, sg.root ) :: sg.slist.toList )
   def toModel = {
     val rm = new Model
     rm addAll slist.toList
