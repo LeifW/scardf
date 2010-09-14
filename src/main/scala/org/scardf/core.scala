@@ -6,25 +6,39 @@ import org.joda.time.LocalDate
  * A node or a variable, something that can be placed as a term in a triple.
  */
 trait TermPlace {
+  /** A canonical string rendering of this node or variable. */
   def rend: String
 }
 
 /**
  * Either a subject node in the context of a graph,
- * or a literal.
+ * or a literal by itself.
+ * @see org.scardf.GraphNode
+ * @see org.scardf.Literal
  */
 trait NodeFromGraph {
+  /** The node itself. This object if it is a [[org.scardf.Literal]]. */
   def node: Node
   def /( ur: UriRef ): NodeBag = NodeBag.empty
   def /[T]( nc: NodeToValueConverter[T] ): T = nc( this )
 }
 
 /**
- * RDF node, either a URI reference, a blank node, or a literal.
+ * RDF node; either a URI reference, a blank node, or a literal.
  */
 sealed abstract class Node() extends TermPlace {
+  /**
+   * If this is a non-literal, constructs a   
+   */  
   def apply( g: Graph ): NodeFromGraph
+  
+  /** Is this node a [[org.scardf.Blank]]]? */
   def isBlank = isInstanceOf[Blank]
+  
+  /**
+   * Is this node a [[org.scardf.Literal]]?
+   * @see Literal
+   */        
   def isLiteral = isInstanceOf[Literal]
 }
 
@@ -33,7 +47,9 @@ object Node {
    * Constructs a node from given value.
    * <li>for a Node, returns it</li>
    * <li>for a GraphNode, returns its node</li>
-   * <li>for a String, Int, Long, BigInt, BigDecimal, Boolean, LocalDate, returns it as a typed literal</li>
+   * <li>for a String, returns a [[org.scardf.PlainLiteral]]</li>
+   * <li>for given object of class Int, Long, BigInt, BigDecimal, Boolean, LocalDate:
+   *     constructs an appropriate typed literal and returns it</li>
    * <li>for other values, throws an IllegalArgumentException</li>
    */
   def from( a: Any ): Node = {
@@ -55,36 +71,37 @@ object Node {
 
   /**
    * Checks if given node matches given template (any object).
-   * <li>every node matches object Node</li>
-   * <li>every literal node matches object Literal</li>
-   * <li>every plain literal matches object PlainLiteral</li>
-   * <li>every typed literal matches object TypedLiteral</li>
-   * <li>every subject node matches object SubjectNode</li>
-   * <li>every blank node matches object Blank</li>
-   * <li>every URI reference matches object UriRef</li>
+   * <li>every node matches object Node: `matches` always returns `true`</li>
+   * <li>only literal nodes match object [[org.scardf.Literal]]</li>
+   * <li>only plain literals match object PlainLiteral</li>
+   * <li>only typed literals match object TypedLiteral</li>
+   * <li>only subject nodes match object SubjectNode</li>
+   * <li>only blank node match object Blank</li>
+   * <li>only URI reference match object UriRef</li>
    * <li>if template is a node, parameters are checked for equality</li>
    * <li>if template is a graph node, its node is checked for equality</li>
    * <li>if template is function of Node to Boolean, this function is applied to tested node;
-   * any exception thrown from this function is absorbed and <code>false</code> is returned</li>
-   * <li>if template is {@link None}, false is returned</li>
-   * <li>if template is {@link Some}, this method is reapplied with the content being the template parameter</li>
-   * <li>in all other cases, a node is constructed from the template object using {@link Node#from},
-   * and this is compared to the tested node</li>
+   *     any exception thrown from this function is absorbed and `false` is returned</li>
+   * <li>if template is [[scala.None]], `false` is returned</li>
+   * <li>if template is [[scala.Some]], this method is reapplied with the content being
+   *     the template parameter</li>
+   * <li>in all other cases, a node is constructed from the template object using
+   *     the method `from`, and this node is compared to the tested node `n`</li>
    */
   def matches( template: Any, n: Node ): Boolean = template match {
     case Node => true
     case Literal => n.isLiteral
     case PlainLiteral => n.isInstanceOf[PlainLiteral]
     case TypedLiteral => n.isInstanceOf[TypedLiteral]
-    case SubjectNode => !n.isLiteral
+    case SubjectNode => n.isInstanceOf[SubjectNode]
     case UriRef => n.isInstanceOf[UriRef]
     case Blank => n.isBlank
-    case m: Node => m == n
+    case _: Node => template == n
     case gn: GraphNode => gn.node == n
     case fn: Function[Node, Boolean] => try { fn( n ) } catch { case e: Exception => false }
     case None => false
     case Some(x) => matches( x, n )
-    case v => (Node from v) == n
+    case _ => (Node from template) == n
   }
 }
 
@@ -199,7 +216,9 @@ object Literal {
 case class PlainLiteral( override val lexicalForm: String, langTagOpt: Option[LangTag] ) 
 extends Literal( lexicalForm ) {
   def @@( lang: LangTag ) = PlainLiteral( lexicalForm, Some( lang ) )
-  override def rend = "\"" + escapedLexicalForm + "\"" + ( langTagOpt map { "@" + _.code } getOrElse "" ) 
+  def langExt = langTagOpt map {"@" + _.code} getOrElse ""
+  override def rend = "\"" + escapedLexicalForm + "\"" + langExt
+  override def toString = "PlainLiteral(\"" + lexicalForm + "\"" + langExt + ")"
 }
 
 object PlainLiteral {
@@ -212,8 +231,13 @@ object PlainLiteral {
 case class TypedLiteral( override val lexicalForm: String, datatypeUriRef: UriRef )
 extends Literal( lexicalForm ) {
   override def rend = "\"" + escapedLexicalForm + "\"^^" + datatypeUriRef.rend
+  override def toString = "TypedLiteral(\"" + lexicalForm + "\", " + datatypeUriRef.rend + ")"
 }
 
+/**
+ * A language tag, used in @{link PlainLiteral plain literals}.
+ * Identity of the tag is its [[#code]], forced to be lowercase. 
+ */ 
 sealed class LangTag( c: String ) {
   val code = c.toLowerCase
   

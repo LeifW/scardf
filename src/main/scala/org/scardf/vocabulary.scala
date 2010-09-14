@@ -1,6 +1,6 @@
 package org.scardf
 
-class Vocabulary( val prefix: String ) {
+case class Vocabulary( prefix: String ) {
   def \( suffix: String ) = UriRef( prefix + suffix )
   def ÷( suffix: String ) = UriRef( prefix + suffix )
   def ÷( suffixSymbol: Symbol ): UriRef = ÷( suffixSymbol.name )
@@ -11,7 +11,7 @@ class Vocabulary( val prefix: String ) {
   def propStr( suffix: String ) = Property[String]( prefix + suffix )( asString )
 }
 
-case object XSD extends Vocabulary( "http://www.w3.org/2001/XMLSchema#" ) {
+object XSD extends Vocabulary( "http://www.w3.org/2001/XMLSchema#" ) {
   val string = XSD÷"string"
   val integer = XSD÷"integer"
   val long = XSD÷"long"
@@ -25,7 +25,7 @@ case object XSD extends Vocabulary( "http://www.w3.org/2001/XMLSchema#" ) {
   val duration = XSD÷"duration"
 }
 
-case object RDF extends Vocabulary( "http://www.w3.org/1999/02/22-rdf-syntax-ns#" ) {
+object RDF extends Vocabulary( "http://www.w3.org/1999/02/22-rdf-syntax-ns#" ) {
   val Type = prop( "type" )
   val ID = RDF÷"ID"
   val nil = RDF÷"nil"

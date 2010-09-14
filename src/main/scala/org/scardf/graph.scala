@@ -11,6 +11,7 @@ trait Mutable
 object Graph {
   def apply() = new SetGraph( Set.empty[RdfTriple] )
   def apply( triples: Set[RdfTriple] ): SetGraph = new SetGraph( triples )
+  def apply( branches: Branch* ): SetGraph = build( branches: _* )
   
   /**
    * Builds a SetGraph from a sequence of branches.
@@ -18,17 +19,6 @@ object Graph {
    * @return constructed graph
    */
   def build( branches: Branch* ): SetGraph = branches.map{ _.toGraph }.foldLeft( Graph() ){ _++_ }
-
-  /**
-   * Some mapping between blank nodes in two graphs if these graphs are isomorphic,
-   * None otherwise.
-   * NOT IMPLEMENTED YET!
-   */
-  def mapping( g1: Set[RdfTriple], g2: Set[RdfTriple] ): Option[Map[Blank, Blank]] = {
-    val s1 = MSet() ++ g1
-    val s2 = MSet() ++ g2
-    Some(Map())
-  }
 }
 
 /**
@@ -70,7 +60,8 @@ trait Graph {
     val List( thisBt, thisNbt, thatBt, thatNbt ) = 
       List( thisBti, thisNbti, thatBti, thatNbti ) map { i => Set( i.toSeq: _* ) }
     if ( thisNbt != thatNbt ) return false
-    Graph.mapping( thisBt, thatBt ).isDefined
+    true //TBD not implemented yet
+    //Isomorphism.mapping( this, that ).isDefined
   }
   
   def contains( t: RdfTriple ): Boolean
@@ -88,7 +79,10 @@ trait Graph {
   def subjects: Set[SubjectNode] = Set() ++ triples map { _.subj }
   def objects: Set[Node] = Set() ++ triples map { _.obj }
   def nodes = subjects ++ objects
-  def blankNodes: Iterable[Blank] = nodes filter { _.isBlank } map { _.asInstanceOf[Blank] }
+  def blankNodes: Iterable[Blank] = (
+    triplesLike( Blank, Node, Node ).map( _.subj.asInstanceOf[Blank] ) ++ 
+    triplesLike( Node, Node, Blank ).map( _.obj.asInstanceOf[Blank] )
+  )
   
   def triplesMatching( pf: PartialFunction[RdfTriple, Boolean] ): Iterable[RdfTriple] = 
     triples filter{ pf orElse {case _ => false} }

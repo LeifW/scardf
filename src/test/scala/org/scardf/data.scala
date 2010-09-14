@@ -26,11 +26,11 @@ object Doe extends Vocabulary( "http://doe.eg#" ) {
   val List( anna, bob, john, jane ) = List( 'anna, 'bob, 'john, 'jane ) map{ this÷_ }
 
   // shortcut pairs for describing type and gender
-  private val aPerson = RDF.Type -> person
-  private val aMale = isMale -> true
-  private val aFemale = isMale -> false
+  val aPerson = RDF.Type -> person
+  val aMale = isMale -> true
+  val aFemale = isMale -> false
 
-  private val basegraph = Graph.build(
+  private val basegraph = Graph(
     anna -( aPerson, aFemale, 
       name -> Branch( given -> "Anna" ), height -> 107, birthday -> "2004-04-14",
       likes -> swimming
@@ -52,15 +52,6 @@ object Doe extends Vocabulary( "http://doe.eg#" ) {
   val graph0 = basegraph ++ 
     ( basegraph/-/name/asSubjectNode.iterable map { sn => RdfTriple( sn, family, Literal( "Doe" ) ) } )
 
-//  val metersHigh = ÷( "metersHigh" )
-//  val graph = Augment triples {
-//    case RdfTriple( s, `height`, TypedLiteral( hInCm, _ ) ) => List( s -metersHigh-> ( hInCm.toInt/100 ) )
-//  } augmented basegraph
-  
   val graph = Augment add { _ -family-> "Doe" } forEach { _/-/name } on basegraph
-//  val graph = Augment add { p => p -age-> yearsSince( p/birthday/asLocalDate ) } forEach { _/-/having( RDF.Type -> person ) } on basegraph
-  
   val familyMembers = graph.bagOf( john, jane, anna, bob )
-  
-  private def yearsSince( ld: org.joda.time.LocalDate ) = 2010 - ld.getYear
 }

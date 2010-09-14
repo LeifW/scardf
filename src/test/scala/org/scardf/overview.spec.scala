@@ -11,7 +11,7 @@ object PrimerSpecs extends Specification {
   "NodeBag" should {
     import PeopleVoc._
     import Doe._
-    val g = Graph.build( john -(
+    val g = Graph( john -(
       PeopleVoc.name -> Branch( given -> "John", family -> "Doe" ),
       spouse -> ( jane -spouse -> john )
     ) )

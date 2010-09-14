@@ -30,6 +30,8 @@ case class Branch( root: SubjectNode, assignments: Pair[ UriRef, Twig ]* ) exten
   def toGraph = Graph( triples )
 
   def rend = root + ": " + assignments
+  
+  override def toString = root + "-( " + assignments.mkString( ", " ) + " )"
 }
 
 object Branch {
@@ -51,6 +53,7 @@ object Branch {
 class ObjSet( objs: Set[Node] ) extends Twig {
   override val triples = ObjSet.empty
   override val values = objs
+  override def toString = objs.mkString( "{", ", ", "}" )
 }
 
 object ObjSet {
