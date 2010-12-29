@@ -49,23 +49,17 @@ object Parse {
       sb.toString
     }
 
-    def lowercaseChars = {
+    def takeWhile(test: Int => Boolean) = {
       sb.clear()
-      while (Character.isLowerCase(char) && char != -1) {
+      while (test(char) && char != -1) {
         sb.append(char.toChar)
         char = reader.read
       }
       sb.toString
     }
 
-    def alphaNumericChars = {
-      sb.clear()
-      while (Character.isLetterOrDigit(char) && char != -1) {
-        sb.append(char.toChar)
-        char = reader.read
-      }
-      sb.toString
-    }
+    def lowercaseChars = takeWhile(Character.isLowerCase)
+    def alphaNumericChars = takeWhile(Character.isLetterOrDigit)
 
     def require(c: Char) {
       if (char != c)
@@ -102,7 +96,14 @@ object Parse {
         }
         case '@' => {
           char = reader.read
-          PlainLiteral(string, Some(LangTag(lowercaseChars))) // TODO: Handle the possibility of ('-' [a-z0-9]+ )*
+          val language = lowercaseChars
+          val region = if (char == '-') {
+            char = reader.read
+            "-" + alphaNumericChars
+          } else {
+            ""
+          }
+          PlainLiteral(string, Some(LangTag(language + region))) // TODO: Handle the possibility of ('-' [a-z0-9]+ )*
         }
         case other => PlainLiteral(string)
       }
