@@ -1,6 +1,7 @@
 package org.scardf
 
 import java.io.Reader
+//import scala.collection.mutable.ArrayStack
 
 /**
  * Attempting to follow the EBNF at http://www.w3.org/TR/rdf-testcases/#ntriples
@@ -10,10 +11,18 @@ import java.io.Reader
 object Parse {
   val space = 32
   val tab = 9
+  val hexDigits4 = Array(4096, 256, 16, 1)
+  val hexDigits6 = Array(1048576, 65536, 4096, 256, 16, 1)
+  def fromHex(c:Int) = c match {
+    case l if Character.isLetter(l) => l - 55
+    case d if Character.isDigit(d) => d - 48
+  }
+
   val sb = new StringBuilder(256)
 
   def apply(reader: Reader) = {
     val graph = new MutableSetGraph()
+    //val triples = new ArrayStack[RdfTriple]
     var line = 1
     var char = reader.read()
 
@@ -87,7 +96,29 @@ object Parse {
 
     def literal = {
       require('"')
-      val string = takeUntil('"')
+      val string = {
+        sb.clear()
+        while (char != '"' && char != -1) {
+          sb.append((if (char == '\\') { // Escaped char
+            char = reader.read
+            char match {
+              case 'u' => hexDigits4.foldLeft(0)((sum, i)=> {char = reader.read; sum + i * fromHex(char)})
+              case 'U' => hexDigits4.foldLeft(0)((sum, i)=> {char = reader.read; sum + i * fromHex(char)})
+                // Integer.valueOf("ABCD",16).intValue.toChar
+              case 't' => '\t'
+              case 'n' => '\n'
+              case 'r' => '\r'
+              case other => other
+            }
+          } else { // Regular character
+            char
+          }) toChar)
+          //sb.append(char.toChar)
+          char = reader.read
+        }
+        char = reader.read
+      sb.toString
+      }
       char match {
         case '^' => {
           char = reader.read
@@ -113,7 +144,7 @@ object Parse {
       case '"' => literal
       case '<' => uriref
       case '_' => blank
-      case other => error("'\"' or '<' expected on line " + line + ", '" + other.toChar + "' found.")
+      case other => error("'\"', '<', or '_' expected on line " + line + ", '" + other.toChar + "' found.")
     }
 
     // The actual parsing loop
@@ -131,11 +162,15 @@ object Parse {
       eoln
 
       line = line + 1
-
-      graph + RdfTriple(subject, predicate, obj)
+      print(subject)
+      print(predicate)
+      println(obj)
+      //graph + RdfTriple(subject, predicate, obj)
+      //triples += RdfTriple(subject, predicate, obj)
     }
 
     reader.close()
+    //Graph() ++ triples
     graph
   }
 }
