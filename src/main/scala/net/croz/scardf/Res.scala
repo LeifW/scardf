@@ -5,7 +5,9 @@ import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import com.hp.hpl.jena.rdf.model.{ RDFNode, Resource, ResIterator }
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype._
+import com.hp.hpl.jena.datatypes.xsd.impl.XMLLiteralType
 import scala.collection.mutable.{Set => MSet}
+import scala.xml.{Node => XMLNode} 
 
 class Res( val jResource: Resource, val model: Model ) 
 extends Node( jResource ) with util.Logging {
@@ -79,6 +81,7 @@ extends Node( jResource ) with util.Logging {
       case i: Int       => jResource.addProperty( prop, i.toString, XSDint )
       case d: LocalDate => jResource.addProperty( prop, d.toString, XSDdate )
       case d: DateTime  => jResource.addProperty( prop, ISODateTimeFormat.dateTime.print( d ), XSDdateTime )
+      case xml: XMLNode => jResource.addProperty( prop, xml.toString, XMLLiteralType.theXMLLiteralType )
       case x            => throw new RuntimeException( x + " of unknown type" )
     }
     this

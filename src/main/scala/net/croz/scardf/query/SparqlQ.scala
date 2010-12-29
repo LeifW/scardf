@@ -70,6 +70,18 @@ abstract class SparqlQ[+T <: SparqlQ[T]] extends util.Logging {
         throw new RuntimeException( "Failed parsing \"" + query + "\" because of" + e.getMessage, e)
     }
   }
+
+  def execution( service: String, query: String ) = {
+    log.info( "Executing query " + query )
+    try {
+      val q = QueryFactory.create( query )
+      QueryExecutionFactory.sparqlService( service, q)
+    }
+    catch {
+      case e: QueryParseException =>
+        throw new RuntimeException( "Failed parsing \"" + query + "\" because of" + e.getMessage, e)
+    }
+  }
 }
 
 class DescribeQ( v: QVar ) extends SparqlQ[DescribeQ] {
@@ -94,6 +106,7 @@ abstract class BaseSelectQ[ T <: BaseSelectQ[T] ] extends SparqlQ[T] {
     orderByClause + limitClause + offsetClause
   
   def executeOn( model: Model ) = new QResultsIterator( execution( model, queryStr ).execSelect )
+  def executeOn( service: String ) = new QResultsIterator( execution( service, queryStr ).execSelect )
   
   def option( solutions: QResultsIterator, v: QVar ): Option[Node] = {
     if ( !solutions.hasNext ) return None
@@ -112,6 +125,7 @@ class SelectQ( exprs: Any* ) extends BaseSelectQ[SelectQ] {
   }
   
   def from( model: Model ) = executeOn( model )
+  def from( service: String ) = executeOn( service )
 }
 
 class SelectIteratorQ[T]( converter: NodeConverter[T] ) 
