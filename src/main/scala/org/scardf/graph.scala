@@ -221,7 +221,10 @@ class Serializator( sf: SerializationFormat ) {
     sw.toString
   }
   
-  def readFrom( r: java.io.Reader ): Graph = throw new UnsupportedOperationException()
+  def readFrom( r: java.io.Reader ): Graph = sf match {
+    case NTriple => Parse(r)
+    case _ => throw new UnsupportedOperationException()
+  }
 }
 
 abstract class SerializationFormat
