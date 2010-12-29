@@ -110,6 +110,14 @@
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
         <version>2.10.1</version>
+		<executions> 
+          <execution> 
+            <goals> 
+              <goal>compile</goal> 
+              <goal>testCompile</goal> 
+            </goals> 
+          </execution> 
+        </executions>
         <configuration>
           <vscalaVersion>1.0</vscalaVersion>
           <args> 
