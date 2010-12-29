@@ -103,8 +103,7 @@ object Parse {
             char = reader.read
             char match {
               case 'u' => hexDigits4.foldLeft(0)((sum, i)=> {char = reader.read; sum + i * fromHex(char)})
-              case 'U' => hexDigits4.foldLeft(0)((sum, i)=> {char = reader.read; sum + i * fromHex(char)})
-                // Integer.valueOf("ABCD",16).intValue.toChar
+              case 'U' => hexDigits6.foldLeft(0)((sum, i)=> {char = reader.read; sum + i * fromHex(char)})
               case 't' => '\t'
               case 'n' => '\n'
               case 'r' => '\r'
@@ -113,7 +112,6 @@ object Parse {
           } else { // Regular character
             char
           }) toChar)
-          //sb.append(char.toChar)
           char = reader.read
         }
         char = reader.read
