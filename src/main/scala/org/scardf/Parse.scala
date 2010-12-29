@@ -1,7 +1,6 @@
 package org.scardf
 
 import java.io.Reader
-//import scala.collection.mutable.ArrayStack
 
 /**
  * Attempting to follow the EBNF at http://www.w3.org/TR/rdf-testcases/#ntriples
@@ -22,7 +21,6 @@ object Parse {
 
   def apply(reader: Reader) = {
     val graph = new MutableSetGraph()
-    //val triples = new ArrayStack[RdfTriple]
     var line = 1
     var char = reader.read()
 
@@ -160,15 +158,11 @@ object Parse {
       eoln
 
       line = line + 1
-      print(subject)
-      print(predicate)
-      println(obj)
-      //graph + RdfTriple(subject, predicate, obj)
-      //triples += RdfTriple(subject, predicate, obj)
+
+      graph + RdfTriple(subject, predicate, obj)
     }
 
     reader.close()
-    //Graph() ++ triples
     graph
   }
 }
