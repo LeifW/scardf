@@ -10,7 +10,9 @@ import java.io.Reader
 object Parse {
   val space = 32
   val tab = 9
+  //val hexDigits4 = Stream.iterate(1)(_*16).take(4).reverse
   val hexDigits4 = Array(4096, 256, 16, 1)
+  //val hexDigits6 = Stream.iterate(1)(_*16).take(6).reverse
   val hexDigits6 = Array(1048576, 65536, 4096, 256, 16, 1)
   def fromHex(c:Int) = c match {
     case l if Character.isLetter(l) => l - 55
