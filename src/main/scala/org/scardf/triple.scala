@@ -2,7 +2,7 @@ package org.scardf
 
 case class RdfTriple( subj: SubjectNode, pred: UriRef, obj: Node )
 {
-  lazy val rend = subj.rend + " " + pred.rend + " " + obj.rend + " ."
+  lazy val rend = subj.rend + " " + pred.rend + " " + obj.rend + " .\n"
 
   lazy val hasBlankNode = this match {
     case RdfTriple( b: Blank, _, _ ) => true

@@ -14,6 +14,7 @@ object Parse {
   val hexDigits4 = Array(4096, 256, 16, 1)
   //val hexDigits6 = Stream.iterate(1)(_*16).take(6).reverse
   val hexDigits6 = Array(1048576, 65536, 4096, 256, 16, 1)
+
   def fromHex(c:Int) = c match {
     case l if Character.isLetter(l) => l - 55
     case d if Character.isDigit(d) => d - 48
@@ -29,6 +30,7 @@ object Parse {
     def optionalWhitespace {
       while ((char == space || char == tab) && char != -1) char = reader.read
     }
+
     def whitespace {
       if (char != space && char != tab)
         error("Whitespace expected on line " + line + ", '" + char.toChar + "' found.")
