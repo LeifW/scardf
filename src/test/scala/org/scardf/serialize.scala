@@ -3,7 +3,7 @@ package org.scardf
 import org.specs._
 import org.specs.runner.JUnit4
 import java.io.{CharArrayReader, CharArrayWriter, FileReader, StringReader}
-import org.scalacheck._
+//import org.scalacheck._
 
 class SerializerSpecsTest extends JUnit4(SerializerSpecs)
 
