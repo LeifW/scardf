@@ -10,6 +10,8 @@ import java.io.Reader
 object Parse {
   val space = 32
   val tab = 9
+  val cr = 13
+  val lf = 10
   //val hexDigits4 = Stream.iterate(1)(_*16).take(4).reverse
   val hexDigits4 = Array(4096, 256, 16, 1)
   //val hexDigits6 = Stream.iterate(1)(_*16).take(6).reverse
@@ -39,11 +41,11 @@ object Parse {
     }
 
     def eoln {
-      if (char == 13) {
+      if (char == cr) {
         char = reader.read
-        if (char == 10)
+        if (char == lf)
           char = reader.read
-      } else if (char == 10) {
+      } else if (char == lf) {
         char = reader.read
       } else {
         error("Line-end expected on line " + line + ", '" + char.toChar + "' found.")
@@ -147,10 +149,7 @@ object Parse {
       case other => error("'\"', '<', or '_' expected on line " + line + ", '" + other.toChar + "' found.")
     }
 
-    // The actual parsing loop
-    while (char != -1) {
-
-      optionalWhitespace
+    def triple {
       val subject = subjectNode
       whitespace
       val predicate = uriref
@@ -159,11 +158,23 @@ object Parse {
       optionalWhitespace
       require('.')
       optionalWhitespace
+
+      graph + RdfTriple(subject, predicate, obj)
+    }
+
+    // The actual parsing loop
+    while (char != -1) {
+
+      optionalWhitespace
+
+      if (char == '<' || char == '_')
+        triple
+      else if (char == '#') // #Comment line
+        while (char != lf && char != cr) char = reader.read
+
       eoln
 
       line = line + 1
-
-      graph + RdfTriple(subject, predicate, obj)
     }
 
     reader.close()
