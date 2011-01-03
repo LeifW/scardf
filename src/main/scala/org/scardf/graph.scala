@@ -209,10 +209,12 @@ class Serializator( sf: SerializationFormat ) {
     )
     this
   }
-  
+
+  def throwUnsupported = throw new UnsupportedOperationException( "Serialization format not supported" )
+
   def write( g: Graph, w: java.io.Writer ): Unit = sf match {
-    case NTriple => w write g.triples.map{ _.rend }.mkString( "\n" )
-    case _ => throw new UnsupportedOperationException()
+    case NTriple => w write g.triples.map{ _.rend }.mkString( "", "\n", "\n" )
+    case _ => throwUnsupported
   }
 
   def asString( g: Graph ): String = {
@@ -221,7 +223,10 @@ class Serializator( sf: SerializationFormat ) {
     sw.toString
   }
   
-  def readFrom( r: java.io.Reader ): Graph = throw new UnsupportedOperationException()
+  def readFrom( r: java.io.Reader ): Graph = sf match {
+    case NTriple => NTriplesParser(r)
+    case _ => throwUnsupported
+  }
 }
 
 abstract class SerializationFormat
