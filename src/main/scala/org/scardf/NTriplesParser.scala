@@ -176,7 +176,7 @@ object NTriplesParser {
           require('.')
           optionalWhitespace
           eoln
-          graph + RdfTriple(subject, predicate, obj)
+          graph += RdfTriple(subject, predicate, obj)
         }
       }
       line += 1
