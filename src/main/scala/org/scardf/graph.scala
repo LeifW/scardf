@@ -2,8 +2,6 @@ package org.scardf
 
 import collection.mutable.{Set => MSet, Map => MMap}
 
-trait Mutable
-
 /**
  * Factory for a SetGraph.
  *
@@ -37,14 +35,17 @@ trait Graph {
   def +( triple: RdfTriple ): Graph
   
   /**
-   * 
+   * Creates a new graph by adding all RDF triples to the triples in this graph.
    * @param triples a traversable collection of RDF triples to add
    * @return new graph containing a union of this and given triples
    */
-  def ++( triples: Traversable[RdfTriple] ): Graph
-  
+  def ++( triples: TraversableOnce[RdfTriple] ): Graph
+
+  /**
+   * this ++ g.triples
+   */
   def ++( g: Graph ): Graph = this ++ g.triples
-  
+
   /**
    * Two graphs are isomorphic if there is a mapping
    * between blank nodes in the graphs which makes the two graphs equal.
@@ -109,8 +110,32 @@ trait Graph {
 }
 
 /**
+ * Graphs with mutable state.
+ */
+trait MutableGraph extends Graph {
+  /**
+   * Adds a triple to this collection, mutating it.
+   * @param t the triple
+   * @return this
+   */
+  def +=( t: RdfTriple ): Graph
+
+  /**
+   * Adds triples to this collection, mutating it.
+   * @param ts a traversable collection of RDF triples to add
+   * @return this
+   */
+  def ++=( ts: TraversableOnce[RdfTriple] ): Graph
+
+  /**
+   * this ++= g.triples
+   */
+  def ++=( g: Graph ): Graph = this ++= g.triples
+}
+
+/**
  * Adds triples index to the in-memory graph.
- * Implements triplesLike to 
+ * Implements triplesLike to work
  */
 trait IndexedGraph extends Graph {
   val index = new NodeIndex()
@@ -134,7 +159,7 @@ class SetGraph( tset: Set[RdfTriple] ) extends IndexedGraph {
   tset foreach { index store }
   def triples = tset
   def +( t: RdfTriple ): SetGraph = new SetGraph( Set( t ) ++ tset )
-  def ++( ts: Traversable[RdfTriple] ) = new SetGraph( tset ++ ts )
+  def ++( ts: TraversableOnce[RdfTriple] ) = new SetGraph( tset ++ ts )
   override def ++( g: Graph ): SetGraph = this ++ g.triples
   override def contains( t: RdfTriple ) = tset contains t
   
@@ -145,22 +170,27 @@ class SetGraph( tset: Set[RdfTriple] ) extends IndexedGraph {
  * Triples can be added to this graph by mutating its triples set.
  * Not thread-safe.
  */
-class MutableSetGraph() extends IndexedGraph with Mutable {
+class MutableSetGraph() extends IndexedGraph with MutableGraph {
   val mset = MSet[RdfTriple]()
   def triples = mset //TODO make read-only view
   
-  def +( t: RdfTriple ): MutableSetGraph = {
+  def +( t: RdfTriple ): MutableSetGraph = this ++ List( t )
+
+  def +=( t: RdfTriple ): MutableSetGraph = {
     mset += t
     index store t
-    this 
+    this
   }
-  
-  def ++( ts: Traversable[RdfTriple] ): MutableSetGraph = {
+
+  override def ++=( ts: TraversableOnce[RdfTriple] ): MutableSetGraph = {
     mset ++= ts
     ts foreach { index store }
     this 
   }
-  
+
+  override def ++( ts: TraversableOnce[RdfTriple] ): MutableSetGraph =
+    new MutableSetGraph() ++= this.mset ++= ts
+
   override def ++( g: Graph ): MutableSetGraph = this ++ g.triples
   override def contains( t: RdfTriple ) = mset contains t
   

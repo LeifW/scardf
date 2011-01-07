@@ -6,7 +6,7 @@ import com.hp.hpl.jena.rdf.model.{Literal => JLiteral, Property => JProperty, _}
 import com.hp.hpl.jena.datatypes.TypeMapper
 import com.hp.hpl.jena.query._
 
-class JenaGraph( private[jena] val m: Model ) extends Graph with QueryEngine {
+class JenaGraph( private[jena] val m: Model ) extends MutableGraph with QueryEngine {
   
   def this() = this( ModelFactory.createDefaultModel )
 
@@ -36,11 +36,13 @@ class JenaGraph( private[jena] val m: Model ) extends Graph with QueryEngine {
 
   def contains( t: RdfTriple ) = m contains statement( t )
 
-  override def +( t: RdfTriple ) = {
+  override def +( t: RdfTriple ) = new JenaGraph ++= triples += t
+  
+  override def +=( t: RdfTriple ) = {
     m add statement( t )
     this
   }
-  
+
   override def =~( that: Graph ): Boolean = that match {
     case jg: JenaGraph => m isIsomorphicWith jg.m
     case g => super.=~( g )
@@ -66,8 +68,11 @@ class JenaGraph( private[jena] val m: Model ) extends Graph with QueryEngine {
       ResourceFactory.createTypedLiteral( lf, TypeMapper.getInstance.getSafeTypeByName( dtUri ) )
   }
 
-  override def ++( ts: Traversable[RdfTriple] ) = { ts foreach { this+_ }; this }
-    def select( qStr: String ): List[Map[QVar, Node]] = {
+  override def ++=( ts: TraversableOnce[RdfTriple] ) = { ts foreach +=; this }
+
+  override def ++( ts: TraversableOnce[RdfTriple] ) = new JenaGraph() ++= triples ++= ts
+
+  def select( qStr: String ): List[Map[QVar, Node]] = {
     val q = QueryFactory.create( qStr )
     val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
     val rs = new QResultsIterator( e.execSelect, m )

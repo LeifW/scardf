@@ -48,7 +48,7 @@ case class GraphNode( node: SubjectNode, graph: Graph ) extends NodeFromGraph {
     g/node
   }
   
-  private def spreadTo( subgraph: Graph with Mutable, covered: MSet[SubjectNode] ) {
+  private def spreadTo( subgraph: MutableGraph, covered: MSet[SubjectNode] ) {
     println( subgraph.rend, covered )
     if ( covered contains this.node ) return
     else covered += this.node
