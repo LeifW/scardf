@@ -243,7 +243,7 @@ class Serializator( sf: SerializationFormat ) {
   def throwUnsupported = throw new UnsupportedOperationException( "Serialization format not supported" )
 
   def write( g: Graph, w: java.io.Writer ): Unit = sf match {
-    case NTriple => w write g.triples.map{ _.rend }.mkString( "", "\n", "\n" )
+    case NTriple => g.triples foreach { t => w write ( t.rend + "\n" ) }
     case _ => throwUnsupported
   }
 
