@@ -150,18 +150,37 @@ object NodeConverter {
   } )
 
   /**
-   * Yields the lexical form for plain literals with given language tag.
+   * Converter for the lexical form for plain literals with given language tag.
    * Converter throws RdfTraversalException if given node is not a plain literal with given tag.
    * @throws IllegalArgumentException if given tag is null.
    */
   def asStringIn( tag: LangTag ) = {
     require( tag != null )
     new SimpleNodeConverter[String]( {
-      case PlainLiteral( lf, `tag` ) => lf
+      case PlainLiteral( lf, Some(`tag`) ) => lf
       case x => throw new RdfTraversalException( "Not a string with lang tag " + tag + ": " + x )
     } )
   }
-  
+
+  /**
+   * Converter for the option of lexical form for a plain literal with given language tag in bag.
+   * Converter throws RdfTraversalException if there is more than one plain literal with given tag in bag.
+   * @throws IllegalArgumentException if given tag is null.
+   */
+  def lexicIn( tag: LangTag ) = {
+    require( tag != null )
+    NodeBagConverter[Option[String]]{
+      _.nodes flatMap {
+        case PlainLiteral( lf, Some(`tag`) ) => List( lf )
+        case _ => Nil
+      } match {
+        case List( one ) => Some( one )
+        case Nil => None
+        case x => throw new RdfTraversalException( "Multiple plain literals with lang tag " + tag + ": " + x )
+      }
+    }
+  }
+
   implicit val asNode = new SimpleNodeConverter[Node]( _.node )
   implicit val asSubjectNode = new SimpleNodeConverter[SubjectNode]( _.node.asInstanceOf[SubjectNode] )
   
