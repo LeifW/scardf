@@ -55,7 +55,7 @@ extends PredicateConstruct {
    * and then by adding more statements recursively for each X with a predicate tree mapped to P in T. 
    * @throws RdfTraversalException if required predicate has no value in any required node
    */
-  def grow( root: GraphNode, outGraph: Graph ): GraphNode = {
+  def grow( root: GraphNode, outGraph: MutableGraph ): GraphNode = {
     var g = outGraph
     for ( (predicate, subtree) <- branches ++ optionals ) {
       val bag = root/predicate
@@ -86,9 +86,8 @@ extends PredicateConstruct {
    * or a subject node with a single RDF.first property and a RDF.rest property, 
    * where the value of the RDF.rest property is a RDF list itself.
    */
-  def spanRdfList( rootl: GraphNode, target: Graph ) = {
+  def spanRdfList( rootl: GraphNode, g: MutableGraph ) = {
     import NodeConverter.asGraphNode
-    var g = target
     var l = rootl
     while ( l.node != RDF.nil ) {
       val head = l/RDF.first/asGraphNode
