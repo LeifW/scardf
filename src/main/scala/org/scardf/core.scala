@@ -103,6 +103,8 @@ object Node {
     case Some(x) => matches( x, n )
     case _ => (Node from template) == n
   }
+
+  override def toString = "Node"
 }
 
 /**
@@ -128,12 +130,16 @@ class UriRef( val uri: String ) extends SubjectNode with NodeToBagConverter {
     case _ => throw new RdfTraversalException( "Cannot traverse a predicate from " + nfg )
   }
   
-  def ~( subtrees: PredicateTree* ) = PredicateTree( this -> subtrees.reduceLeft( _ ++ _ ) )()
-  
-  def ?~( subtrees: PredicateTree* ) = PredicateTree.opt( this -> subtrees.reduceLeft( _ ++ _ ) )
-  
-  def ? = PredicateTree.opt( this -> PredicateTree.empty )
-  
+  def ~( subs: PredicateBranch* ) = PredicateBranch( this, true, true, PredicateTree( subs: _* ) )
+  /** Equivalent to (-this)~(...) */ 
+  def <~( subs: PredicateBranch* ) = PredicateBranch( this, false, true, PredicateTree( subs: _* ) )
+  /** Equivalent to (-this?)~(...) */
+  def ?<~( subs: PredicateBranch* ) = PredicateBranch( this, false, false, PredicateTree( subs: _* ) )
+  /** Equivalent to (this?)~(...) */
+  def ?~( subs: PredicateBranch* ) = PredicateBranch( this, true, false, PredicateTree( subs: _* ) )
+  def ? = PredicateBranch( this, true, false, PredicateTree.empty )
+  def unary_- = PredicateBranch( this, false, true, PredicateTree.empty )
+
   override def rend = "<" + uri + ">"
 
   final def canEqual(other: Any): Boolean = other.isInstanceOf[UriRef]
@@ -201,9 +207,9 @@ object Literal {
   
   implicit def toPlainLiteral( s: String ) = PlainLiteral( s, None )
   implicit def toTypedLiteral( b: Boolean ) = TypedLiteral( b.toString, XSD.boolean )
-  implicit def toTypedLiteral( i: Int ) = TypedLiteral( i.toString, XSD.integer )
+  implicit def toTypedLiteral( i: Int ) = TypedLiteral( i.toString, XSD.int )
+  implicit def toTypedLiteral( i: BigInt ) = TypedLiteral( i.toString, XSD.integer )
   implicit def toTypedLiteral( i: Long ) = TypedLiteral( i.toString, XSD.long )
-  implicit def toTypedLiteral( i: BigInt ) = TypedLiteral( i.toString, XSD.long ) //TODO type?
   implicit def toTypedLiteral( d: BigDecimal ) = TypedLiteral( d.toString, XSD.decimal )
   implicit def toTypedLiteral( d: LocalDate ) = TypedLiteral( 
     org.joda.time.format.ISODateTimeFormat.date.print( d ), XSD.date

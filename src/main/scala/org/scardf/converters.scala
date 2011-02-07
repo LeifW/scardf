@@ -106,12 +106,12 @@ class SimpleNodeConverter[T]( fn: NodeFromGraph => T ) extends NodeToValueConver
  * throws an exception, the exception is ignored and an RDF traversal exception is thrown.
  * In all other cases, an RDF traversal exception is thrown.
  */
-class TypeNodeConverter[T]( typename: String, typeUri: UriRef, fn: String => T ) extends LiteralConverter[T] {
-  private[this] def throwException( o: Any ) = 
+class TypeNodeConverter[T]( typename: String, domain: UriRef => Boolean, fn: String => T ) extends LiteralConverter[T] {
+  private[this] def throwException( o: Any ) =
     throw new RdfTraversalException( "Not " + typename + ": " + o )
   
   override def convertLiteral( l: Literal ) = l match {
-    case TypedLiteral( lf, `typeUri` ) => fn( lf )
+    case TypedLiteral( lf, typeUri ) if domain(typeUri) => fn( lf )
     case PlainLiteral( lf, _ ) => try { fn(lf) } catch { case e => throwException( l ) }
     case _ => throwException( l )
   }
@@ -124,6 +124,12 @@ object NodeConverter {
     NodeBagConverter[NodeBag]( sourceBag => 
       new NodeBag( sourceBag.nodesFromGraph flatMap { convert( _ ).nodes }, sourceBag.graph )
     )
+
+  def multitypeNodeConverter[T]( typename: String, typeUriSet: Set[UriRef], fn: String => T ) =
+    new TypeNodeConverter( typename, { t: UriRef => typeUriSet contains t }, fn )
+
+  def typeNodeConverter[T]( typename: String, typeUri: UriRef, fn: String => T ): TypeNodeConverter[T] =
+    multitypeNodeConverter[T]( typename, Set( typeUri ), fn )
 
   /**
    * Bag converter filters out all duplicate nodes in bag.
@@ -138,7 +144,7 @@ object NodeConverter {
    * with type other than {XSD.string}.
    * @see asLexic
    */
-  implicit val asString = new TypeNodeConverter[String]( "a string", XSD.string, { x => x } )
+  implicit val asString = typeNodeConverter[String]( "a string", XSD.string, { x: String => x } )
   
   /**
    * Constructs a node-to-value converter yielding a lexical form for given literal.
@@ -193,19 +199,21 @@ object NodeConverter {
   }
   
   implicit val asInt: TypeNodeConverter[Int] = 
-    new TypeNodeConverter[Int]( "an integer", XSD.integer, _.toInt )
-  implicit val asBigDecimal = 
-    new TypeNodeConverter[BigDecimal]( "a big decimal", XSD.decimal, BigDecimal(_) )
+    multitypeNodeConverter[Int]( "an int", Set( XSD.int, XSD.integer ), _.toInt )
+  implicit val asBigInt: TypeNodeConverter[BigInt] =
+    multitypeNodeConverter[BigInt]( "a big integer", Set( XSD.int, XSD.integer ), BigInt(_) )
+  implicit val asBigDecimal =
+    typeNodeConverter[BigDecimal]( "a big decimal", XSD.decimal, BigDecimal(_) )
   implicit val asFloat: TypeNodeConverter[Float] =
-    new TypeNodeConverter[Float]( "a float", XSD.float, _.toFloat )
+    typeNodeConverter[Float]( "a float", XSD.float, _.toFloat )
   implicit val asDouble: TypeNodeConverter[Double] = 
-    new TypeNodeConverter[Double]( "a double", XSD.double, _.toDouble )
+    typeNodeConverter[Double]( "a double", XSD.double, _.toDouble )
   implicit val asBoolean: TypeNodeConverter[Boolean] = 
-    new TypeNodeConverter[Boolean]( "a boolean", XSD.boolean, _.toBoolean )
-  implicit val asLocalDate = new TypeNodeConverter[LocalDate](
+    typeNodeConverter[Boolean]( "a boolean", XSD.boolean, _.toBoolean )
+  implicit val asLocalDate = typeNodeConverter[LocalDate](
     "a date", XSD.date, IsoFormat.parseDateTime( _ ).toLocalDate
   )
-  implicit val asDateTime = new TypeNodeConverter[DateTime](
+  implicit val asDateTime = typeNodeConverter[DateTime](
     "date and time", XSD.dateTime, IsoFormat.parseDateTime( _ )
   )
 }

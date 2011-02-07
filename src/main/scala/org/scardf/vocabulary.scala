@@ -15,6 +15,7 @@ case class Vocabulary( prefix: String ) {
 object XSD extends Vocabulary( "http://www.w3.org/2001/XMLSchema#" ) {
   val string = XSD\"string"
   val integer = XSD\"integer"
+  val int = XSD\"int"
   val long = XSD\"long"
   val boolean = XSD\"boolean"
   val decimal = XSD\"decimal"

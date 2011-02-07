@@ -68,9 +68,9 @@ class JenaGraph( private[jena] val m: Model ) extends MutableGraph with QueryEng
       ResourceFactory.createTypedLiteral( lf, TypeMapper.getInstance.getSafeTypeByName( dtUri ) )
   }
 
-  override def ++=( ts: TraversableOnce[RdfTriple] ) = { ts foreach +=; this }
+  override def ++=( ts: TraversableOnce[RdfTriple] ): JenaGraph = { ts foreach +=; this }
 
-  override def ++( ts: TraversableOnce[RdfTriple] ) = new JenaGraph() ++= triples ++= ts
+  override def ++( ts: TraversableOnce[RdfTriple] ): JenaGraph = new JenaGraph() ++= triples ++= ts
 
   def select( qStr: String ): List[Map[QVar, Node]] = {
     val q = QueryFactory.create( qStr )

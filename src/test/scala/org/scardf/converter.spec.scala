@@ -27,7 +27,7 @@ object ConverterSpecs extends Specification {
   }
   "predicate-converters" should {
     "convert subject node to bag" in {
-      g/john/height must_== NodeBag( List( TypedLiteral( "167", XSD.integer ) ), g )
+      g/john/height must_== NodeBag( List( TypedLiteral( "167", XSD.int ) ), g )
       g/john/likes must_== g.bagOf( swimming, science )
       g/bob/likes must_== g.bagOf()
     }
