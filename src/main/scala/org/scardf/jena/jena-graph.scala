@@ -72,18 +72,18 @@ class JenaGraph( private[jena] val m: Model ) extends MutableGraph with QueryEng
 
   override def ++( ts: TraversableOnce[RdfTriple] ): JenaGraph = new JenaGraph() ++= triples ++= ts
 
-  def select( qStr: String ): List[Map[QVar, Node]] = {
+  private def newQueryExecution( qStr: String ) = {
     val q = QueryFactory.create( qStr )
-    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
-    val rs = new QResultsIterator( e.execSelect, m )
-    rs.solutions
+    QueryExecutionFactory.create( q, m, new QuerySolutionMap )
   }
-  
-  def construct( qStr: String ): Graph = {
-    val q = QueryFactory.create( qStr )
-    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
-    new JenaGraph( e.execConstruct )
-  }
+
+  override def select( qStr: String ): List[Map[QVar, Node]] =
+    new QResultsIterator( newQueryExecution( qStr ).execSelect, m ).solutions
+
+  override def construct( qStr: String ): Graph =
+    new JenaGraph( newQueryExecution( qStr ).execConstruct )
+
+  override def ask( qStr: String ) = newQueryExecution( qStr ).execAsk
 }
 
 class JenaSerializator( val sf: SerializationFormat) extends Serializator( sf ) {

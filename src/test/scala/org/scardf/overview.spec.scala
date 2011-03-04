@@ -83,4 +83,26 @@ object PrimerSpecs extends Specification {
       }
     }
   }
+  "QueryEngineBackedGraph over Jena" should {
+    import PeopleVoc._
+    import Doe._
+
+    class DemoQEBGraph( jg: jena.JenaGraph ) extends QueryEngineBackedGraph {
+      override def select( q: String ): List[Map[QVar, Node]] = { println( q ); jg.select(q) }
+      override def ask( q: String ): Boolean = { println( q );  jg.ask(q) }
+    }
+
+    val jg = new jena.JenaGraph
+    jg ++= Doe.graph
+    val g = new DemoQEBGraph( jg )
+
+    "delegate triplesLike" in {
+      g.triplesLike( SubjectNode, Some(height), TypedLiteral ).map{ _.subj }.toSet must_== Set( anna, bob, john, jane )
+      g.triplesLike( SubjectNode, height, 99 ).map{ _.subj }.toList must_== List( bob )
+    }
+    "delegate contains" in {
+      g.contains( RdfTriple( bob, height, Node from 99 ) ) must_== true
+      g.contains( RdfTriple( john, height, Node from 99 ) ) must_== false
+    }
+  }
 }
