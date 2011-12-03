@@ -83,6 +83,7 @@ class TemplateFactory {
 trait QueryEngine {
   def select( q: String ): List[Map[QVar, Node]] = error( "SELECT not implemented" )
   def construct( qStr: String ): Graph = error( "CONSTRUCT not implemented" )
+  def describe( qStr: String ): Graph = error( "DESCRIBE not implented" )
   def ask( qStr: String ): Boolean = error( "ASK not implented" )
 }
 
