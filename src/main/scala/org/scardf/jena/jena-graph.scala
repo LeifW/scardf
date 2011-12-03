@@ -83,6 +83,11 @@ class JenaGraph( private[jena] val m: Model ) extends MutableGraph with QueryEng
   override def construct( qStr: String ): Graph =
     new JenaGraph( newQueryExecution( qStr ).execConstruct )
 
+  override def describe( qStr: String ): Graph = {
+    println( qStr )
+    new JenaGraph( newQueryExecution( qStr ).execDescribe )
+  }
+
   override def ask( qStr: String ) = newQueryExecution( qStr ).execAsk
 }
 
@@ -118,6 +123,7 @@ object Jena {
     if ( r.isAnon ) Blank( r.getId.getLabelString ) else uriRef( r )
   
   def uriRef( r: Resource ) = UriRef( r.getURI )
+  def graphNode( r: Resource ) = new JenaGraph( r.getModel )/UriRef( r.getURI )
   
   def node( n: RDFNode ): Node = n match {
     case null         => null
