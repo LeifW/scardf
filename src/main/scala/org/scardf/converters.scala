@@ -189,6 +189,7 @@ object NodeConverter {
 
   implicit val asNode = new SimpleNodeConverter[Node]( _.node )
   implicit val asSubjectNode = new SimpleNodeConverter[SubjectNode]( _.node.asInstanceOf[SubjectNode] )
+  implicit val asUriRef = new SimpleNodeConverter[UriRef]( _.node.asInstanceOf[UriRef] )
   
   implicit val asGraphNode = new GraphNodeConverter[GraphNode]{
     def convertGraphNode( gn: GraphNode ) = gn
