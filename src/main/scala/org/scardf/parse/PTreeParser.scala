@@ -4,8 +4,12 @@ import util.parsing.combinator.JavaTokenParsers
 import org.scardf._
 
 class PTreeParser extends JavaTokenParsers {
-  def doc: Parser[PTreeDoc] = prologue ~ (ptdef*) ^^ {
-    case p ~ defs => PTreeDoc( p, defs )
+  def doc: Parser[PTreeDoc] = prologue ~ defs ^^ {
+    case p ~ d => PTreeDoc( p, d )
+  }
+  def defs: Parser[List[PTDef]] = (repsep(fullBranch, ",") | (ptdef*)) ^^ {
+    case pte: PTreeExpr => List( PTDef( "", pte ) )
+    case l: List[PTDef] => l
   }
   def prologue: Parser[List[PrefixDef]] = prefixDef*
   def prefixDef: Parser[PrefixDef] = "@prefix" ~> prefix ~ ":" ~ urirefStr <~ "." ^^ {
@@ -17,7 +21,7 @@ class PTreeParser extends JavaTokenParsers {
     case v ~ _ ~ e ~ _ => PTDef( v, e )
   }
   def varname = ident
-  def ptree: Parser[PTreeExpr] = (branch*) ^^ PTreeExpr
+  def ptree: Parser[PTreeExpr] = repsep(branch, ",") ^^ PTreeExpr
   def branch: Parser[BranchExpr] = fullBranch | varref
   def varref: Parser[BranchExpr] = varname ^^ { VarRef( _ ) }
   def fullBranch: Parser[BranchExpr] = opt("-") ~ predref ~ opt("?") ~ opt( "~" ~> subbranches ) ^^ {
@@ -30,7 +34,7 @@ class PTreeParser extends JavaTokenParsers {
   def uriref: Parser[PredRef] = urirefStr ^^ {Uriref(_)}
   def anyref: Parser[PredRef] = "*" ^^ {_ => AnyRef}
   def shortref: Parser[Localref] = prefix ~ ":" ~ localref ^^ { case a ~_~ b => Localref( a, b ) }
-  def localref: Parser[String] = "[^\\?\\s]+".r
+  def localref: Parser[String] = "[^=\\?\\s]+".r
 }
 
 case class PTreeDoc( prefixes: List[PrefixDef], ptdefs: List[PTDef] )
@@ -50,17 +54,19 @@ object PtParse {
     val input = """
 @prefix b: <http://b.eg/> .
 
-A := -*? b:three .
+A := -*?, b:three .
 B := b:one ~ b:two? ~ A . 
 C := <http://example.org> ~ b:bla? ~ -b:bla . 
 """
     println( parse( input ) )
+//    println( parse( "b:one ~ b:two?" ) )
   }
   
   def parse( input: String ) = {
     val p = new PTreeParser
     val ptc = new PtConstructor
     val doc = p.parseAll( p.doc, input )
+    println(doc)
     ptc.construct( doc.get )
   }
 }
