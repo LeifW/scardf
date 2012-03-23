@@ -59,7 +59,7 @@ case class TemplateGraph( v: QVar, ttriples: Iterable[TemplateTriple] ) {
 object TemplateFactory {
   def apply( assignments: Pair[Blank, QVar]* ) = {
     val tf = new TemplateFactory
-    tf.varMap ++ assignments
+    tf.varMap ++= assignments
     tf
   }
 }
