@@ -29,6 +29,7 @@ case class GraphList[E]( gn: GraphNode, nc: NodeToValueConverter[E] ) extends Rd
     var currentGNode = gn
     while ( currentGNode/RDF.first/#? ) {
       val e = currentGNode/RDF.first/nc
+      f(e)
       currentGNode = currentGNode/RDF.rest/asGraphNode
     }
   }
