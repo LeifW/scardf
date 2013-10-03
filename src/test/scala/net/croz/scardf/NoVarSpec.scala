@@ -1,10 +1,12 @@
 package net.croz.scardf
 
 import org.joda.time.LocalDate
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-class NoVarSpecTest extends org.specs.runner.JUnit4( NoVarSpec )
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 object NoVarSpec extends Specification {
 
   "j" should {

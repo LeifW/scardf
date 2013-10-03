@@ -1,15 +1,15 @@
 package org.scardf
 
 import org.joda.time.LocalDate
-import org.specs._
-import org.specs.runner.JUnit4
 import org.joda.time.LocalDate
 import NodeConverter._
 import PeopleVoc._
 import Doe._
+import org.specs2.mutable.Specification
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class ConverterSpecsTest extends JUnit4(ConverterSpecs)
-
+@RunWith(classOf[JUnitRunner])
 object ConverterSpecs extends Specification {
   val g = Doe.graph
   "value converters" should {

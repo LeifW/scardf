@@ -1,12 +1,14 @@
 package net.croz.scardf
 
 import org.joda.time.LocalDate
-import org.specs.Specification
+import org.specs2.mutable.Specification
 import PeopleVocabulary._
 import FamilyVocabulary._
 
-class QuerySpecsTest extends org.specs.runner.JUnit4(QuerySpecs)
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 object QuerySpecs extends Specification with specs.RdfMatchers {
   val data = FamilyVocabulary.model
   "Triplet factory" should {
@@ -14,8 +16,8 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
       implicit val tempGraph = new Model
       Anon( Likes -> Anon(), Spouse -> Anon( Likes -> Anon() ) )
       val ts = Set.empty ++ ( query.TripletFactory tripletsFrom tempGraph )
-      ts.size must_== 3
       for ( t <- ts ) t must haveClass[Tuple3[Any, Any, Any]]
+      ts.size must_== 3
     }
   }
   "Query mechanism" should {
@@ -56,7 +58,7 @@ object QuerySpecs extends Specification with specs.RdfMatchers {
       val allHobbiesResult = Sparql select hobby where( (person, Likes, hobby) ) from data
       val hobbies = allHobbiesResult.solutions.map{ _(hobby).asRes }
       hobbies.size must beGreaterThanOrEqualTo( 2 )
-      hobbies must containAll( Set( Swimming, Science ) )
+      hobbies must containAllOf( List( Swimming, Science ) )
     }
     "select one X as option" in {
       Sparql selectX asRes where( (X, Likes, Science) ) from data must_== Some( john )

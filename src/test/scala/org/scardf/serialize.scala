@@ -1,20 +1,20 @@
 package org.scardf
 
-import org.specs._
-import org.specs.runner.JUnit4
+import org.specs2.mutable._
 import java.io.{CharArrayReader, CharArrayWriter, FileReader, StringReader}
-//import org.scalacheck._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
+import org.specs2.matcher.MatchResult
 
-class SerializerSpecsTest extends JUnit4(SerializerSpecs)
-
+@RunWith(classOf[JUnitRunner])
 object SerializerSpecs extends Specification {
-  def parse( input: String, triples: Set[RdfTriple] ) {
+  def parse( input: String, triples: Set[RdfTriple] ):MatchResult[Boolean] ={
     val parsedGraph = new jena.JenaGraph ++ new Serializator(NTriple).readFrom(new StringReader(input))
     val expectedGraph = new jena.JenaGraph ++ triples
-    expectedGraph mustVerify( _ =~ parsedGraph )
+     ( expectedGraph =~ parsedGraph ) must beTrue
   }
-  def parse( input: String ) { parse( input, Set[RdfTriple]() ) }
-  def parse( input: String, branch: Branch ) { parse( input, branch.triples ) }
+  def parse( input: String ):MatchResult[Boolean]= { parse( input, Set[RdfTriple]() ) }
+  def parse( input: String, branch: Branch ):MatchResult[Boolean]= { parse( input, branch.triples ) }
 
   "Base graph serialization / deserialization mechanism" should {
     val a = UriRef("a")
@@ -24,6 +24,7 @@ object SerializerSpecs extends Specification {
     val b2 = new Blank("b2")
 
     "parse an empty line" in parse( "\n" )
+    
     "parse a comment" in parse( " # a comment\n" )
     "parse an all-URIref triple" in parse( "<a> <b> <c> .\n", a-b->c )
     "parse triple with blanks" in parse( "_:b1 <b> _:b2 .\n", b1-b->b2 )
@@ -36,7 +37,7 @@ object SerializerSpecs extends Specification {
       val testFileLocation = "src/test/scala/org/scardf/test.nt"
       val baseG = new jena.JenaGraph ++ new Serializator(NTriple).readFrom( new FileReader( testFileLocation ) )
       val jenaG = new jena.JenaSerializator(NTriple).readFrom( new FileReader( testFileLocation ) )
-      baseG mustVerify( _ =~ jenaG )
+      ( baseG =~ jenaG ) must beTrue
     }
     "be round-tripable" in {
       val g = new jena.JenaGraph ++ Doe.graph
@@ -45,7 +46,7 @@ object SerializerSpecs extends Specification {
       s.write(g, w)
       val r = new CharArrayReader( w.toCharArray )
       val gout = new jena.JenaGraph ++ s.readFrom(r)
-      gout mustVerify( _ =~ g )
+      ( gout =~ g )must beTrue
     }
 //    "pass scalacheck" in {
 //      skip( "too stupid" )

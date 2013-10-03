@@ -1,12 +1,12 @@
 package org.scardf
 
 import org.joda.time.LocalDate
-import org.specs._
-import org.specs.runner.JUnit4
+import org.specs2.mutable._
 import NodeConverter._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class PrimerSpecsTest extends JUnit4(PrimerSpecs)
-
+@RunWith(classOf[JUnitRunner])
 object PrimerSpecs extends Specification {
   "NodeBag" should {
     import PeopleVoc._

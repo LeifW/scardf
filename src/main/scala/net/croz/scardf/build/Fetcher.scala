@@ -22,7 +22,7 @@ abstract class Fetcher {
   def fetch( one: Res, resultModel: Model ): Res
 }
 
-class TakeFetcher( takes: Collection[_] ) extends Fetcher {
+class TakeFetcher( takes: Iterable[_] ) extends Fetcher {
   def fetch( one: Res, resultModel: Model ): Res = {
     Sparql take takes to resultModel from one
     one in resultModel
