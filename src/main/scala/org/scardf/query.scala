@@ -59,7 +59,7 @@ case class TemplateGraph( v: QVar, ttriples: Iterable[TemplateTriple] ) {
 object TemplateFactory {
   def apply( assignments: Pair[Blank, QVar]* ) = {
     val tf = new TemplateFactory
-    tf.varMap ++ assignments
+    tf.varMap ++= assignments
     tf
   }
 }
@@ -81,6 +81,47 @@ class TemplateFactory {
 }
 
 trait QueryEngine {
-  def select( q: String ): List[Map[QVar, Node]]
-  def construct( qStr: String ): Graph
+  def select( q: String ): List[Map[QVar, Node]] = error( "SELECT not implemented" )
+  def construct( qStr: String ): Graph = error( "CONSTRUCT not implemented" )
+  def describe( qStr: String ): Graph = error( "DESCRIBE not implented" )
+  def ask( qStr: String ): Boolean = error( "ASK not implented" )
+}
+
+trait QueryEngineBackedGraph extends Graph with QueryEngine {
+
+  private def matcher( template: Any, v: String ): List[String] = template match {
+    case Node => Nil
+    case Literal => List( "isLITERAL(" + v + ")" )
+    case PlainLiteral => List( "DATATYPE(" + v + ") = \"" + XSD.string.uri + "\"" )
+    case TypedLiteral => List( "DATATYPE(" + v + ") != \"" + XSD.string.uri + "\"" )
+    case SubjectNode => List( "isURI(" + v + ") || isBLANK(" + v + ")" )
+    case UriRef => List( "isURI(" + v + ")" )
+    case Blank => List( "isBLANK(" + v + ")" )
+    case n: Node => List( v + " = " + n.rend )
+    case gn: GraphNode => matcher( gn.node, v )
+    case fn: Function[Node, Boolean] => Nil //TODO must postprocess function
+    case None => List( "false" )
+    case Some(x) => matcher( x, v )
+    case _ => matcher( Node from template, v )
+  }
+
+  private def selectPart( sp: Any, pp: Any, op: Any ) = {
+    val matchers = matcher( sp, X1.rend ) ::: matcher( pp, X2.rend ) ::: matcher( op, X3.rend )
+    val filterExpr = if (matchers.isEmpty) ""
+      else "FILTER (" + matchers.map( "(" + _ + ")" ).reduceLeft( _ + " && " + _ ) + ")"
+    "{ ?X1 ?X2 ?X3 . " + filterExpr + " }"
+  }
+
+  override def triplesLike( sp: Any, pp: Any, op: Any ): Iterable[RdfTriple] =
+    select( "SELECT ?X1 ?X2 ?X3 WHERE " + selectPart( sp, pp, op ) ) map { result =>
+      RdfTriple( result(X1).asInstanceOf[SubjectNode], result(X2).asInstanceOf[UriRef], result(X3) )
+    }
+
+  override def triples = triplesLike( Node, Node, Node )
+
+  override def contains( t: RdfTriple ) =
+    ask( "ASK " + selectPart( t.subj, t.pred, t.obj ) )
+
+  override def +( t: RdfTriple ) = error( "Method + not implemented" )
+  override def ++( ts: TraversableOnce[RdfTriple] ) = error( "Method ++ not implemented" )
 }

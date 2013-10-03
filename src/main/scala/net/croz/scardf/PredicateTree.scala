@@ -24,7 +24,7 @@ object PredicateTree {
   implicit def toPredicateTree( pp: PropPath ): PredicateTree = prependTree( pp, empty )
   
   def prependTree( path: PropPath, endTree: PredicateTree ): PredicateTree = PredicateTree( 
-    path.first -> (
+    path.head -> (
       if ( path.size > 1 ) prependTree( path drop 1, endTree )
       else endTree
     )
@@ -54,7 +54,7 @@ case class PredicateTree( branches: Map[Prop, PredicateTree] ) extends Predicate
     remainMap ++= branches
     for ( (predicate, subtree) <- other.branches )
       (branches get predicate) match {
-        case Some( PredicateTree.empty ) => remainMap removeKey predicate
+        case Some( PredicateTree.empty ) => remainMap remove predicate
         case Some( existingTree ) => remainMap( predicate ) = existingTree -- subtree
         case None => None
       }
@@ -63,7 +63,7 @@ case class PredicateTree( branches: Map[Prop, PredicateTree] ) extends Predicate
   
   def subtree( path: PropPath ): PredicateTree = 
     if ( path.isEmpty ) this
-    else branches( path.first ).subtree( path drop 1 )
+    else branches( path.head ).subtree( path drop 1 )
   
   def subMerge( path: PropPath, other: PredicateTree ) =
     //TODO FIX! this does not return the whole graph!

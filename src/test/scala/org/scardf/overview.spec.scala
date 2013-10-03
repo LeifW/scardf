@@ -1,12 +1,12 @@
 package org.scardf
 
 import org.joda.time.LocalDate
-import org.specs._
-import org.specs.runner.JUnit4
+import org.specs2.mutable._
 import NodeConverter._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class PrimerSpecsTest extends JUnit4(PrimerSpecs)
-
+@RunWith(classOf[JUnitRunner])
 object PrimerSpecs extends Specification {
   "NodeBag" should {
     import PeopleVoc._
@@ -81,6 +81,28 @@ object PrimerSpecs extends Specification {
       "triplesLike with a closure" in {
         g.triplesLike( Node, height, { h: Literal => asInt(h) < 100 } ).map{ _.subj }.toList must_== List( bob )
       }
+    }
+  }
+  "QueryEngineBackedGraph over Jena" should {
+    import PeopleVoc._
+    import Doe._
+
+    class DemoQEBGraph( jg: jena.JenaGraph ) extends QueryEngineBackedGraph {
+      override def select( q: String ): List[Map[QVar, Node]] = { println( q ); jg.select(q) }
+      override def ask( q: String ): Boolean = { println( q );  jg.ask(q) }
+    }
+
+    val jg = new jena.JenaGraph
+    jg ++= Doe.graph
+    val g = new DemoQEBGraph( jg )
+
+    "delegate triplesLike" in {
+      g.triplesLike( SubjectNode, Some(height), TypedLiteral ).map{ _.subj }.toSet must_== Set( anna, bob, john, jane )
+      g.triplesLike( SubjectNode, height, 99 ).map{ _.subj }.toList must_== List( bob )
+    }
+    "delegate contains" in {
+      g.contains( RdfTriple( bob, height, Node from 99 ) ) must_== true
+      g.contains( RdfTriple( john, height, Node from 99 ) ) must_== false
     }
   }
 }

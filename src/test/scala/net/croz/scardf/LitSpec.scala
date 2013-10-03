@@ -1,10 +1,13 @@
 package net.croz.scardf
 
 import org.joda.time.LocalDate
+import org.specs2.mutable.Specification
 
-class LitSpecTest extends org.specs.runner.JUnit4( LitSpec )
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-object LitSpec extends org.specs.Specification {
+@RunWith(classOf[JUnitRunner])
+object LitSpec extends Specification {
   "Literals" should {
     "be created from String" in {
       Lit( "example" ).rendering must_== "\"example\""
@@ -24,7 +27,7 @@ object LitSpec extends org.specs.Specification {
       Lit( 1.1D ).asDouble must_== 1.1D
     }
     "be created from BigDecimal" in {
-      val digits = "-1.234567890123456789012345678901234567890"
+      val digits = "-1.2345678901234567890123"
       Lit( BigDecimal( digits ) ).rendering must_== digits
       Lit( BigDecimal( digits ) ).asBigDecimal must_== BigDecimal( digits )
     }

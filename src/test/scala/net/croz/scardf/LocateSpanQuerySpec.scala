@@ -2,10 +2,14 @@ package net.croz.scardf
 
 import PeopleVocabulary._
 import FamilyVocabulary._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class LocateSpanQuerySpecTest extends org.specs.runner.JUnit4( LocateSpanQuerySpec )
+import scala.collection.mutable.{ ListBuffer, Map => MMap }
+import org.specs2.mutable.Specification
 
-object LocateSpanQuerySpec extends org.specs.Specification with specs.RdfMatchers {
+@RunWith(classOf[JUnitRunner])
+object LocateSpanQuerySpec extends Specification with specs.RdfMatchers {
 
   "query system" should {
     val template = Blank( Likes -> Swimming ).root
@@ -15,6 +19,7 @@ object LocateSpanQuerySpec extends org.specs.Specification with specs.RdfMatcher
       val qLikes = QVar()
       val selectQ = Sparql select( X, qLikes ) where( (X, IsMale, true), (X, Likes, qLikes) )
       println( selectQ from FamilyVocabulary.model solutions )
+      true must beTrue
     }
     
 //    "select using locate-span" in {
@@ -25,8 +30,6 @@ object LocateSpanQuerySpec extends org.specs.Specification with specs.RdfMatcher
 //    }
   }
 }
-
-import scala.collection.mutable.{ ListBuffer, Map => MMap }
 
 class LocateSpanQ(
   template: Res, 
@@ -59,8 +62,5 @@ class LocateSpanQ(
   
   def from( dataModel: Model ) = toRdfList( selectQuery from dataModel ) 
 }
-
-//SELECT ?X ?H ?G ?F
-//WHERE { ?X Likes Swimming; Height ?H; Name [ Given ?G; Family ?F ]. }
 //ORDER BY ?H
 

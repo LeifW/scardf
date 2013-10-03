@@ -1,12 +1,12 @@
 package net.croz.scardf
 
-import org.specs.Specification
-import org.specs.runner.JUnit4
+import org.specs2.mutable.Specification
 import PeopleVocabulary._
 import FamilyVocabulary._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class PropPathSpecTest extends JUnit4( PropPathSpec )
-
+@RunWith(classOf[JUnitRunner])
 object PropPathSpec extends Specification with specs.RdfMatchers {
   "normal prop path" should {
     val pp = PropPath( Name, Given )

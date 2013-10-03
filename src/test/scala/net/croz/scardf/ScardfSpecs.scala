@@ -1,19 +1,21 @@
 package net.croz.scardf
 
 import org.joda.time.LocalDate
-import org.specs._
-import org.specs.runner.JUnit4
+import org.specs2.mutable._
 import PeopleVocabulary._
-
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
+/*
+@RunWith(classOf[JUnitRunner])
 object AllSpecs extends Specification {
-  "all of Scardf".isSpecifiedBy( 
+   include( 
     ScardfSpecs, LitSpec, NoVarSpec, PropPathSpec, QuerySpecs // add NodeBagSpec
   )
-  reject( "skipped" )
-}
+//  reject( "skipped" )
+}*/
 
-class ScardfSpecsTest extends JUnit4(ScardfSpecs)
 
+@RunWith(classOf[JUnitRunner])
 object ScardfSpecs extends Specification {
   "NodeBag" should {
     "throw exception on taking one node from empty bag" in {

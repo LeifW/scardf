@@ -79,5 +79,5 @@ object Node {
   /**
    * Sorts a list of nodes by its rendering.
    */
-  def sort( list: List[Node] ): List[Node] = list sort { (a, b) => a.rendering < b.rendering }
+  def sort( list: List[Node] ): List[Node] = list sortWith { (a, b) => a.rendering < b.rendering }
 }

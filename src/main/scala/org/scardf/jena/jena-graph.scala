@@ -6,7 +6,7 @@ import com.hp.hpl.jena.rdf.model.{Literal => JLiteral, Property => JProperty, _}
 import com.hp.hpl.jena.datatypes.TypeMapper
 import com.hp.hpl.jena.query._
 
-class JenaGraph( private[jena] val m: Model ) extends Graph with QueryEngine {
+class JenaGraph( private[jena] val m: Model ) extends MutableGraph with QueryEngine {
   
   def this() = this( ModelFactory.createDefaultModel )
 
@@ -36,11 +36,13 @@ class JenaGraph( private[jena] val m: Model ) extends Graph with QueryEngine {
 
   def contains( t: RdfTriple ) = m contains statement( t )
 
-  override def +( t: RdfTriple ) = {
+  override def +( t: RdfTriple ) = new JenaGraph ++= triples += t
+  
+  override def +=( t: RdfTriple ) = {
     m add statement( t )
     this
   }
-  
+
   override def =~( that: Graph ): Boolean = that match {
     case jg: JenaGraph => m isIsomorphicWith jg.m
     case g => super.=~( g )
@@ -66,19 +68,27 @@ class JenaGraph( private[jena] val m: Model ) extends Graph with QueryEngine {
       ResourceFactory.createTypedLiteral( lf, TypeMapper.getInstance.getSafeTypeByName( dtUri ) )
   }
 
-  override def ++( ts: Traversable[RdfTriple] ) = { ts foreach { this+_ }; this }
-    def select( qStr: String ): List[Map[QVar, Node]] = {
+  override def ++=( ts: TraversableOnce[RdfTriple] ): JenaGraph = { ts foreach +=; this }
+
+  override def ++( ts: TraversableOnce[RdfTriple] ): JenaGraph = new JenaGraph() ++= triples ++= ts
+
+  private def newQueryExecution( qStr: String ) = {
     val q = QueryFactory.create( qStr )
-    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
-    val rs = new QResultsIterator( e.execSelect, m )
-    rs.solutions
+    QueryExecutionFactory.create( q, m, new QuerySolutionMap )
   }
-  
-  def construct( qStr: String ): Graph = {
-    val q = QueryFactory.create( qStr )
-    val e = QueryExecutionFactory.create( q, m, new QuerySolutionMap )
-    new JenaGraph( e.execConstruct )
+
+  override def select( qStr: String ): List[Map[QVar, Node]] =
+    new QResultsIterator( newQueryExecution( qStr ).execSelect, m ).solutions
+
+  override def construct( qStr: String ): Graph =
+    new JenaGraph( newQueryExecution( qStr ).execConstruct )
+
+  override def describe( qStr: String ): Graph = {
+    println( qStr )
+    new JenaGraph( newQueryExecution( qStr ).execDescribe )
   }
+
+  override def ask( qStr: String ) = newQueryExecution( qStr ).execAsk
 }
 
 class JenaSerializator( val sf: SerializationFormat) extends Serializator( sf ) {
@@ -113,6 +123,7 @@ object Jena {
     if ( r.isAnon ) Blank( r.getId.getLabelString ) else uriRef( r )
   
   def uriRef( r: Resource ) = UriRef( r.getURI )
+  def graphNode( r: Resource ) = new JenaGraph( r.getModel )/UriRef( r.getURI )
   
   def node( n: RDFNode ): Node = n match {
     case null         => null
