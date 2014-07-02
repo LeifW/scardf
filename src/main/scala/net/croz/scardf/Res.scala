@@ -79,7 +79,7 @@ extends Node( jResource ) with util.Logging {
       case s: String    => jResource.addProperty( prop, s, prop.datatype.getOrElse( XSDstring ) )
       case b: Boolean   => jResource.addProperty( prop, b.toString, XSDboolean )
       case i: Int       => jResource.addProperty( prop, i.toString, XSDint )
-      case d: LocalDate => jResource.addProperty( prop, d.toString, XSDdate )
+      case d: LocalDate => jResource.addProperty( prop, d.toString("yyyy-MM-dd"), XSDdate )
       case d: DateTime  => jResource.addProperty( prop, ISODateTimeFormat.dateTime.print( d ), XSDdateTime )
       case xml: XMLNode => jResource.addProperty( prop, xml.toString, XMLLiteralType.theXMLLiteralType )
       case x            => throw new RuntimeException( x + " of unknown type" )
