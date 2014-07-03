@@ -6,4 +6,5 @@ target/
 *.iml
 .idea/
 .idea_modules/
+publish.sbt
 
