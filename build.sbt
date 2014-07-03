@@ -1,8 +1,10 @@
 name := "scardf"
 
-version := "0.8.1-SNAPSHOT"
+version := "0.8.1"
 
 scalaVersion := "2.10.4"
+
+organization := "com.github.hochgi"
 
 resolvers ++= Seq("Maven2 Central Repository" at "http://repo1.maven.org/maven2",
  	"Scala-tools Maven2 Repository" at "http://scala-tools.org/repo-releases")
