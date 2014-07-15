@@ -264,3 +264,4 @@ object Turtle extends SerializationFormat
 object NTriple extends SerializationFormat
 object RdfXml extends SerializationFormat
 object N3 extends SerializationFormat
+object JsonLD extends SerializationFormat
