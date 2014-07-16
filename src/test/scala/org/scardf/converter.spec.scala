@@ -21,7 +21,7 @@ object ConverterSpecs extends Specification {
     }
     "convert bags to single value" in {
       g/john/spouse/height/asInt must_== 150
-      g/john/birthday/asLocalDate must_== new LocalDate( 1977, 07, 27 )
+      g/john/birthday/asLocalDate must_== new LocalDate( 1977, 7, 27 )
       g/john/birthday/asString must_== "1977-07-27"
     }
   }

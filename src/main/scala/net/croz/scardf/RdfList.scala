@@ -9,7 +9,7 @@ with scala.Seq[Node] with util.Logging
   def toNodeBag: NodeBag = new NodeBag( iterator.toList )
 
   def jlist: List[RDFNode] = 
-    scala.collection.JavaConversions.JListWrapper( jRdfList.asJavaList.asInstanceOf[java.util.List[RDFNode]] ).toList
+    scala.collection.convert.Wrappers.JListWrapper( jRdfList.asJavaList.asInstanceOf[java.util.List[RDFNode]] ).toList
 
   def length = jRdfList.size
   override def iterator: Iterator[Node] = jlist.map{ n: RDFNode => Node( n ) }.iterator
