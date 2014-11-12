@@ -20,7 +20,9 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "log4j-over-slf4j" % "1.7.7",
   "org.slf4j" % "slf4j-api" % "1.7.7",
   "junit" % "junit" % "4.8.2",
-  "org.specs2" %% "specs2" % "2.3.12" % "test")
+  "org.specs2" %% "specs2" % "2.3.12" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+)
 
 libraryDependencies <++= (scalaVersion){v =>
   if(v.startsWith("2.11")) Seq(

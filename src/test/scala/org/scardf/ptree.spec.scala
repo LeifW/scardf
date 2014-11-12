@@ -1,16 +1,10 @@
 package org.scardf
 
-import org.joda.time.LocalDate
-import org.specs2.mutable._
-import org.joda.time.LocalDate
-import NodeConverter._
 import PeopleVoc.{ name => n, _ }
 import Doe._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.scalatest._
 
-@RunWith(classOf[JUnitRunner])
-object PtreeSpecs extends Specification {
+class PtreeSpecs extends WordSpec with ShouldMatchers {
   val g = new jena.JenaGraph ++= Doe.graph.triples
   "Predicate tree" should {
     "extract deep subgraphs" in {
@@ -25,7 +19,7 @@ object PtreeSpecs extends Specification {
           spouse -> ( jane-( n -> Branch( given -> "Jane" ) ) )
         )
       )
-       ( constructed =~ expectedGraph ) must beTrue
+       ( constructed =~ expectedGraph ) should be (true)
     }
 //    "extract subgraphs with collections" in {
 //      val rg = new MutableSetGraph()
@@ -54,8 +48,8 @@ object PtreeSpecs extends Specification {
       val expectedGraph = new jena.JenaGraph ++ Graph.build(
         jane -( spouse-> john, n-> Branch( given -> "Jane" ) )
       )
-       ( constructed =~ expectedGraph ) must beTrue
-      ( grown =~ expectedGraph ) must beTrue
+       ( constructed =~ expectedGraph ) should be (true)
+      ( grown =~ expectedGraph ) should be (true)
     }
     "all S and O triples" in {
       val pt = PredicateTree( AnyPredicate?, -AnyPredicate? )
@@ -64,8 +58,8 @@ object PtreeSpecs extends Specification {
       val constructed = g.construct( pt.buildPatternBlock( f ).construct )
       val grown = new jena.JenaGraph ++ pt.growNew(g/f).graph
       val expectedGraph = new jena.JenaGraph ++ g.triplesLike( f, Node, Node ) ++ g.triplesLike( Node, Node, f )
-      ( constructed =~ expectedGraph ) must beTrue
-      ( grown =~ expectedGraph ) must beTrue
+      ( constructed =~ expectedGraph ) should be (true)
+      ( grown =~ expectedGraph ) should be (true)
     }
   }
 }
