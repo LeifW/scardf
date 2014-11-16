@@ -2,7 +2,7 @@ name := "scardf"
 
 version := "0.6-SNAPSHOT"
 
-scalaVersion := "2.10.1"
+scalaVersion := "2.11.2"
 
 resolvers++= Seq("Maven2 Central Repository" at "http://repo1.maven.org/maven2",
  	"Scala-tools Maven2 Repository" at "http://scala-tools.org/repo-releases",
