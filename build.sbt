@@ -2,7 +2,7 @@ name := "scardf"
 
 version := "0.6-SNAPSHOT"
 
-scalaVersion := "2.10.1"
+scalaVersion := "2.11.2"
 
 resolvers++= Seq("Maven2 Central Repository" at "http://repo1.maven.org/maven2",
  	"Scala-tools Maven2 Repository" at "http://scala-tools.org/repo-releases",
@@ -14,5 +14,5 @@ libraryDependencies ++= Seq("com.hp.hpl.jena" % "jena" % "2.6.3",
 	 "joda-time" % "joda-time" % "1.6",
 	 "commons-logging" % "commons-logging" % "1.1.1",
 	 "junit" % "junit" % "4.7",
-	 "org.specs2" %% "specs2" % "2.0" % "test")
+	 "org.specs2" %% "specs2" % "2.3.11" % "test")
 
