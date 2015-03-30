@@ -1,5 +1,7 @@
 package org.scardf
 
+import scala.language.implicitConversions
+
 abstract class Twig {
   def triples: Set[RdfTriple]
   def values: Set[Node]
@@ -14,7 +16,7 @@ object Twig {
   }
 }
 
-case class Branch( root: SubjectNode, assignments: Pair[ UriRef, Twig ]* ) extends Twig {
+case class Branch( root: SubjectNode, assignments: (UriRef, Twig)* ) extends Twig {
   override def triples: Set[RdfTriple] = {
     val tsetseq: Seq[Set[RdfTriple]] = for ( a <- assignments ) yield
       a._2.values.map{ RdfTriple( root, a._1, _ ) } ++ a._2.triples
@@ -24,7 +26,7 @@ case class Branch( root: SubjectNode, assignments: Pair[ UriRef, Twig ]* ) exten
   override def values = Set( root )
   
   /** Creates a new branch with the same root and some additional assignments */
-  def ++( additional: Pair[ UriRef, Twig ]* ) =
+  def ++( additional: (UriRef, Twig)* ) =
     new Branch( root, assignments ++ additional: _* )
   
   def toGraph = Graph( triples )
@@ -38,16 +40,16 @@ object Branch {
   
   implicit def toBranch( t: RdfTriple ) = Branch( t.subj, t.pred -> ObjSet( t.obj ) )
   
-  def of( root: SubjectNode, assignments: Seq[ Pair[ UriRef, Twig ] ] ) =
+  def of( root: SubjectNode, assignments: Seq[ ( UriRef, Twig ) ] ) =
     Branch( root, assignments: _* )
   
-  def make( root: SubjectNode, assignments: Pair[ UriRef, Any ]* ): Branch = {
-    val branchSeq: Seq[ Pair[ UriRef, Twig ] ] = 
-      for ( a <- assignments ) yield Pair( a._1, Twig.toTwig( a._2 ) )
+  def make( root: SubjectNode, assignments: (UriRef, Any)* ): Branch = {
+    val branchSeq: Seq[ (UriRef, Twig) ] = 
+      for ( a <- assignments ) yield ( a._1 -> Twig.toTwig( a._2 ) )
     of( root, branchSeq )
   }
   
-  def apply( assignments: Pair[ UriRef, Any ]* ): Branch = make( Blank(), assignments: _* )
+  def apply( assignments: (UriRef, Any)* ): Branch = make( Blank(), assignments: _* )
 }
 
 class ObjSet( objs: Set[Node] ) extends Twig {

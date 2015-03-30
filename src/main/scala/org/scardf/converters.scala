@@ -2,6 +2,7 @@ package org.scardf
 
 import org.joda.time.{LocalDate, DateTime}
 import org.joda.time.format.ISODateTimeFormat.{date => IsoFormat}
+import scala.language.implicitConversions
 
 /**
  * Node-to-value converters take a single {NodeFromGraph} and return object of type T.
@@ -65,7 +66,7 @@ object having {
    * Creates a NodeFilter which leaves only those nodes that 
    * have ALL of the given assignments in the graph.
    */
-  def apply( assignments: Pair[UriRef, Any]* ) = 
+  def apply( assignments: (UriRef, Any)* ) = 
     new NodeFilter( _ match {
       case gn: GraphNode => 
         assignments.map{ assignment => gn has assignment }.foldLeft(true){_&&_}
@@ -112,7 +113,7 @@ class TypeNodeConverter[T]( typename: String, domain: UriRef => Boolean, fn: Str
   
   override def convertLiteral( l: Literal ) = l match {
     case TypedLiteral( lf, typeUri ) if domain(typeUri) => fn( lf )
-    case PlainLiteral( lf, _ ) => try { fn(lf) } catch { case e => throwException( l ) }
+    case PlainLiteral( lf, _ ) => try { fn(lf) } catch { case e: Throwable => throwException( l ) }
     case _ => throwException( l )
   }
   

@@ -3,6 +3,7 @@ package org.scardf
 import PeopleVoc.{ name => n, _ }
 import Doe._
 import org.scalatest._
+import scala.language.postfixOps
 
 class PtreeSpecs extends WordSpec with ShouldMatchers {
   val g = new jena.JenaGraph ++= Doe.graph.triples

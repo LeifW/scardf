@@ -9,6 +9,8 @@ resolvers++= Seq("Maven2 Central Repository" at "http://repo1.maven.org/maven2",
                  "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
                  "wp5.e-taxonomy.eu" at "http://wp5.e-taxonomy.eu/cdmlib/mavenrepo/")
 
+scalacOptions ++= Seq("-unchecked", "-feature", "-deprecation")
+
 parallelExecution in Test := false
 
 libraryDependencies ++= Seq(

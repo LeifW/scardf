@@ -3,6 +3,7 @@ package org.scardf
 import org.joda.time.LocalDate
 import NodeConverter._
 import org.scalatest._
+import scala.language.postfixOps
 
 class PrimerSpecs extends WordSpec with ShouldMatchers {
   import PeopleVoc._

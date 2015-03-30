@@ -1,6 +1,7 @@
 package org.scardf
 
 import org.joda.time.LocalDate
+import scala.language.implicitConversions
 
 /**
  * A node or a variable, something that can be placed as a term in a triple.
@@ -98,7 +99,7 @@ object Node {
     case Blank => n.isBlank
     case _: Node => template == n
     case gn: GraphNode => gn.node == n
-    case fn: Function[Node, Boolean] => try { fn( n ) } catch { case e: Exception => false }
+    case fn: Function[Node @unchecked,Boolean @unchecked] => try { fn( n ) } catch { case e: Exception => false }
     case None => false
     case Some(x) => matches( x, n )
     case _ => (Node from template) == n
@@ -114,7 +115,7 @@ object Node {
 sealed abstract class SubjectNode() extends Node {
   def -( pred: UriRef ) = SubPredPair( this, pred )
   
-  def -( poPairs: Pair[ UriRef, Any ]* ) = Branch.make( this, poPairs: _* )
+  def -( poPairs: (UriRef, Any)* ) = Branch.make( this, poPairs: _* )
   
   override def apply( g: Graph ) = g/this
 }
