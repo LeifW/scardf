@@ -10,7 +10,7 @@ case class GraphNode( node: SubjectNode, graph: Graph ) extends NodeFromGraph {
   
   def -( pred: UriRef ) = SubPredPair( node, pred )
   
-  def -( poPairs: Pair[ UriRef, Any ]* ) = node -( poPairs: _* )
+  def -( poPairs: (UriRef, Any)* ) = node -( poPairs: _* )
 
   /**
    * Does node has given assignment in its graph?
@@ -20,7 +20,7 @@ case class GraphNode( node: SubjectNode, graph: Graph ) extends NodeFromGraph {
    * NO valuesOf p in graph; has( p -> Some(o) ) is reduced to has( p -> o ).
    * @see #valuesOf
    */
-  def has( a: Pair[ UriRef, Any ] ): Boolean = a match {
+  def has( a: (UriRef, Any) ): Boolean = a match {
     case (null, _) => throw new IllegalArgumentException( "GraphNode.has requires predicate" )
     case (_, null) => true
     case (p, None) => valuesOf( p ).isEmpty

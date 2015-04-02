@@ -150,6 +150,7 @@ object Jena {
     case NTriple => "N-TRIPLE"
     case Turtle => "TURTLE"
     case N3 => "N3"
+    case JsonLD => "JSON-LD"
     case _ => null
   }
 }

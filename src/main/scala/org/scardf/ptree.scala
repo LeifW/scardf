@@ -1,6 +1,8 @@
 package org.scardf
 
 import scala.collection.mutable.ArrayBuffer
+import scala.language.implicitConversions
+import sys.error
 
 object PredicateTree {
   val empty = new PredicateTree( Set.empty )

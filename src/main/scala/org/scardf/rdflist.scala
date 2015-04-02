@@ -1,6 +1,7 @@
 package org.scardf
 
 import NodeConverter._
+import scala.language.postfixOps
 
 trait RdfList[E] extends Traversable[E] {
   def first: E

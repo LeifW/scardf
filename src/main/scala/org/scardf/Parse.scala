@@ -1,6 +1,8 @@
 package org.scardf
 
 import java.io.Reader
+import scala.language.postfixOps
+import sys.error
 
 /**
  * Attempting to follow the EBNF at http://www.w3.org/TR/rdf-testcases/#ntriples

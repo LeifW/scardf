@@ -1,5 +1,8 @@
 package org.scardf
 
+import scala.language.implicitConversions
+import sys.error
+
 object QVar {
   //TODO synchronize counter!
   private var last = 0
@@ -57,7 +60,7 @@ case class TemplateGraph( v: QVar, ttriples: Iterable[TemplateTriple] ) {
 }
 
 object TemplateFactory {
-  def apply( assignments: Pair[Blank, QVar]* ) = {
+  def apply( assignments: (Blank, QVar)* ) = {
     val tf = new TemplateFactory
     tf.varMap ++= assignments
     tf
@@ -75,7 +78,7 @@ class TemplateFactory {
   def apply( t: RdfTriple ): TemplateTriple = TemplateTriple( replaced( t.subj ), t.pred, replaced( t.obj ) )
   
   def apply( g: Graph ): TemplateGraph = varMap.toList match {
-    case List( Pair( _, v ) ) => TemplateGraph( v, g.triples map apply )
+    case (_,v) :: Nil => TemplateGraph( v, g.triples map apply )
     case _ => null //TODO ???
   }
 }
@@ -99,7 +102,7 @@ trait QueryEngineBackedGraph extends Graph with QueryEngine {
     case Blank => List( "isBLANK(" + v + ")" )
     case n: Node => List( v + " = " + n.rend )
     case gn: GraphNode => matcher( gn.node, v )
-    case fn: Function[Node, Boolean] => Nil //TODO must postprocess function
+    case fn: Function[Node @unchecked, Boolean @unchecked] => Nil //TODO must postprocess function
     case None => List( "false" )
     case Some(x) => matcher( x, v )
     case _ => matcher( Node from template, v )

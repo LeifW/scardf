@@ -1,6 +1,7 @@
 package org.scardf
 
 import collection.mutable.{Set => MSet, Map => MMap}
+import scala.language.postfixOps
 
 /**
  * Factory for a SetGraph.
@@ -233,7 +234,7 @@ class NodeIndex {
 class Serializator( sf: SerializationFormat ) {
   var bindings = Map[String, String]()
 
-  def prefixes( pairs: Pair[Symbol, Vocabulary]* ): Serializator = { 
+  def prefixes( pairs: (Symbol, Vocabulary)* ): Serializator = { 
     bindings = Map(
       ( pairs map { p => p._1.name -> p._2.prefix } ): _* 
     )
@@ -264,3 +265,4 @@ object Turtle extends SerializationFormat
 object NTriple extends SerializationFormat
 object RdfXml extends SerializationFormat
 object N3 extends SerializationFormat
+object JsonLD extends SerializationFormat

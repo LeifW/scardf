@@ -2,14 +2,15 @@ package org.scardf.parse
 
 import util.parsing.combinator.JavaTokenParsers
 import org.scardf._
+import scala.language.postfixOps
 
 class PTreeParser extends JavaTokenParsers {
   def doc: Parser[PTreeDoc] = prologue ~ defs ^^ {
     case p ~ d => PTreeDoc( p, d )
   }
   def defs: Parser[List[PTDef]] = (repsep(fullBranch, ",") | (ptdef*)) ^^ {
-    case pte: PTreeExpr => List( PTDef( "", pte ) )
-    case l: List[PTDef] => l
+    //case pte: PTreeExpr => List( PTDef( "", pte ) ) //fruitless type test: a value of type List[Object] cannot also be a org.scardf.parse.PTreeExpr
+    case l: List[PTDef @unchecked] => l
   }
   def prologue: Parser[List[PrefixDef]] = prefixDef*
   def prefixDef: Parser[PrefixDef] = "@prefix" ~> prefix ~ ":" ~ urirefStr <~ "." ^^ {
