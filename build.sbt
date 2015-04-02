@@ -1,5 +1,7 @@
 name := "scardf"
 
+organization := "com.github.scardf" //adding this so published artifacts won't have groupID = 'default'
+
 version := "0.6-SNAPSHOT"
 
 scalaVersion := "2.11.6"
